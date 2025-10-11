@@ -1,96 +1,43 @@
-import { PrismaClient, ServiceType } from '@prisma/client';
+import prisma from './prismaClient';
 import { CreateTicketRequest, CreateTicketResponse } from '../interfaces/getTicket';
-
-const prisma = new PrismaClient();
+import { queueManager } from './queueManager';
 
 export class TicketService {
-  
-  //new ticket creation for a specific service
+
+  // new ticket creation for a specific service
   async createTicket(request: CreateTicketRequest): Promise<CreateTicketResponse> {
     const { serviceTypeId } = request;
 
-    //check if the service type exists
-    const serviceType = await prisma.serviceType.findUnique({
-      where: { id: serviceTypeId }
-    });
+    // insert the ticket in the queue and get its details
+    const enq = await queueManager.enqueue(serviceTypeId);
+    if (!enq) throw new Error('Failed to enqueue ticket');
 
-    if (!serviceType) {
-      throw new Error('Service type not found');
-    }
-
-    //compute the next ticket code
-    const ticketCode = await this.generateTicketCode(serviceType.tag);
-
-    //find the current queue length
-    const queueLength = await prisma.ticket.count({
-      where: {
-        serviceTypeId,
-        status: 'WAITING'
-      }
-    });
-
-    //ticket creation
-    const ticket = await prisma.ticket.create({
-      data: {
-        ticketCode,
-        serviceTypeId,
-        status: 'WAITING'
-      },
-      include: {
-        serviceType: true
-      }
-    });
+    // fetch serviceType info for the response
+    const serviceType = await prisma.serviceType.findUnique({ where: { id: serviceTypeId } });
+    if (!serviceType) throw new Error('Service type not found');
 
     return {
       ticket: {
-        id: ticket.id,
-        ticketCode: ticket.ticketCode,
+        id: enq.id,
+        ticketCode: enq.ticketCode,
         serviceType: {
-          id: ticket.serviceType.id,
-          tag: ticket.serviceType.tag,
-          name: ticket.serviceType.name,
+          id: serviceType.id,
+          tag: serviceType.tag,
+          name: serviceType.name,
         },
-        queueLength: queueLength + 1, //+1 because of the ticket just created
-        positionInQueue: queueLength + 1,
-        createdAt: ticket.createdAt
+        queueLength: enq.queueLength,
+        positionInQueue: enq.positionInQueue,
+        createdAt: enq.createdAt
       },
       queueInfo: {
         serviceTypeId,
-        queueLength: queueLength + 1,
+        queueLength: enq.queueLength,
       }
     };
   }
 
-  //generates a unique ticket code based on the service tag
-  private async generateTicketCode(serviceTag: string): Promise<string> {
-    const today = new Date();
-    const dateStr = today.toISOString().split('T')[0].replace(/-/g, ''); //extract only YYYYMMDD
-
-    //count today's tickets for this service
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
-
-    const todayTicketsCount = await prisma.ticket.count({
-      where: {
-        serviceType: {
-          tag: serviceTag
-        },
-        createdAt: {
-          gte: startOfDay,
-          lte: endOfDay
-        }
-      }
-    });
-
-    //format: serviceTag-YYYYMMDD-sequentialNumber
-    //sequentialNumber will be padded with 3 digits
-    //e.g. A-20231005-001
-    const sequenceNumber = (todayTicketsCount + 1).toString().padStart(3, '0');
-    return `${serviceTag}-${dateStr}-${sequenceNumber}`;
-  }
-
-  //return the service types available
-  async getAvailableServices(): Promise<ServiceType[]> {
+  // return the service types available
+  async getAvailableServices(): Promise<any[]> {
     return await prisma.serviceType.findMany({
       orderBy: {
         tag: 'asc'
@@ -98,14 +45,9 @@ export class TicketService {
     });
   }
 
-  //retrieve queue information for a specific service
+  // retrieve queue information for a specific service
   async getQueueInfo(serviceTypeId: string) {
-    const queueLength = await prisma.ticket.count({
-      where: {
-        serviceTypeId,
-        status: 'WAITING'
-      }
-    });
+    const queueLength = await queueManager.getQueueLength(serviceTypeId);
 
     return {
       serviceTypeId,

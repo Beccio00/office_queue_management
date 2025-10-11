@@ -1,50 +1,50 @@
-# Display Real-time Update - 数据流程图
+# Display Real-time Update - Data Flow Diagram
 
-## 完整的数据流程
+## Complete Data Flow
 
-### 1. 初始连接阶段
+### 1. Initial Connection Phase
 
 ```
 ┌──────────┐              ┌──────────┐              ┌──────────┐
 │ Display  │              │  Server  │              │ Database │
-│  屏幕    │              │  后端    │              │  数据库  │
+│  Screen  │              │  Backend │              │          │
 └──────────┘              └──────────┘              └──────────┘
      │                          │                          │
-     │ 1. 建立WebSocket连接      │                          │
+     │ 1. Establish WebSocket   │                          │
      │─────────────────────────>│                          │
      │                          │                          │
-     │ 2. 加入'displays'房间     │                          │
+     │ 2. Join 'displays' room  │                          │
      │─────────────────────────>│                          │
      │                          │                          │
-     │                          │ 3. 查询初始数据           │
+     │                          │ 3. Query initial data    │
      │                          │─────────────────────────>│
      │                          │                          │
-     │                          │ 4. 返回队列状态           │
+     │                          │ 4. Return queue status   │
      │                          │<─────────────────────────│
      │                          │                          │
-     │ 5. 发送初始数据            │                          │
+     │ 5. Send initial data     │                          │
      │<─────────────────────────│                          │
      │                          │                          │
-     │ 6. 渲染UI显示数据          │                          │
+     │ 6. Render UI with data   │                          │
      │                          │                          │
 ```
 
-### 2. Officer叫号阶段
+### 2. Officer Calling Customer Phase
 
 ```
 ┌──────────┐         ┌──────────┐         ┌──────────┐         ┌──────────┐
 │ Officer  │         │  Server  │         │ Database │         │ Display  │
-│  界面    │         │  后端    │         │  数据库  │         │  屏幕    │
+│   UI     │         │  Backend │         │          │         │  Screen  │
 └──────────┘         └──────────┘         └──────────┘         └──────────┘
      │                    │                     │                     │
-     │ ① 点击              │                     │                     │
+     │ ① Click            │                     │                     │
      │ "Call Next"        │                     │                     │
      │                    │                     │                     │
      │ ② POST             │                     │                     │
      │ /api/queue/next    │                     │                     │
      │───────────────────>│                     │                     │
      │                    │                     │                     │
-     │                    │ ③ 查询下一个票号      │                     │
+     │                    │ ③ Query next ticket │                     │
      │                    │ SELECT * FROM       │                     │
      │                    │ tickets WHERE       │                     │
      │                    │ status='waiting'    │                     │
@@ -52,62 +52,62 @@
      │                    │ LIMIT 1             │                     │
      │                    │────────────────────>│                     │
      │                    │                     │                     │
-     │                    │ ④ 返回票号A002       │                     │
+     │                    │ ④ Return ticket A002│                     │
      │                    │<────────────────────│                     │
      │                    │                     │                     │
-     │                    │ ⑤ 更新票据状态        │                     │
+     │                    │ ⑤ Update ticket     │                     │
      │                    │ UPDATE tickets      │                     │
      │                    │ SET status='serving'│                     │
      │                    │ WHERE id='A002'     │                     │
      │                    │────────────────────>│                     │
      │                    │                     │                     │
-     │                    │ ⑥ 更新成功            │                     │
+     │                    │ ⑥ Update success    │                     │
      │                    │<────────────────────│                     │
      │                    │                     │                     │
-     │                    │ ⑦ 查询完整Display数据 │                     │
-     │                    │ (当前服务票、下一批、 │                     │
-     │                    │  队列状态、柜台状态)  │                     │
+     │                    │ ⑦ Query display data│                     │
+     │                    │ (current, next,     │                     │
+     │                    │  queue, counters)   │                     │
      │                    │────────────────────>│                     │
      │                    │                     │                     │
-     │                    │ ⑧ 返回完整数据        │                     │
+     │                    │ ⑧ Return full data  │                     │
      │                    │<────────────────────│                     │
      │                    │                     │                     │
-     │ ⑨ 返回票据给Officer  │                     │                     │
+     │ ⑨ Return to Officer│                     │                     │
      │<───────────────────│                     │                     │
      │                    │                     │                     │
-     │ ⑩ Officer UI更新   │                     │                     │
-     │ 显示"正在服务A002"  │                     │                     │
+     │ ⑩ Officer UI update│                     │                     │
+     │ Show "Serving A002"│                     │                     │
      │                    │                     │                     │
-     │                    │ ⑪ WebSocket广播       │                     │
+     │                    │ ⑪ WebSocket broadcast│                    │
      │                    │ io.to('displays')   │                     │
      │                    │ .emit('queue-update',│                     │
      │                    │       displayData)  │                     │
      │                    │─────────────────────────────────────────>│
      │                    │                     │                     │
-     │                    │                     │                     │ ⑫ Display收到消息
+     │                    │                     │                     │ ⑫ Display receives
      │                    │                     │                     │ socket.on('queue-update')
      │                    │                     │                     │
-     │                    │                     │                     │ ⑬ 更新React状态
+     │                    │                     │                     │ ⑬ Update React state
      │                    │                     │                     │ setDisplayInfo(data)
      │                    │                     │                     │
-     │                    │                     │                     │ ⑭ React重新渲染
-     │                    │                     │                     │ - 当前服务: A002
-     │                    │                     │                     │ - 柜台号: #1
-     │                    │                     │                     │ - 下一批顾客更新
+     │                    │                     │                     │ ⑭ React re-renders
+     │                    │                     │                     │ - Current: A002
+     │                    │                     │                     │ - Counter: #1
+     │                    │                     │                     │ - Next customers update
      │                    │                     │                     │
 ```
 
-## 详细步骤说明
+## Detailed Step Explanation
 
-### Officer端流程
+### Officer Side Flow
 
 ```javascript
-// Step 1: 用户点击按钮
+// Step 1: User clicks button
 <Button onClick={handleCallNextCustomer}>
   Call Next Customer
 </Button>
 
-// Step 2: 发送HTTP请求
+// Step 2: Send HTTP request
 const handleCallNextCustomer = async () => {
   const response = await fetch('/api/queue/next', {
     method: 'POST',
@@ -116,25 +116,25 @@ const handleCallNextCustomer = async () => {
   
   const ticket = await response.json();
   
-  // Step 3: 更新本地状态
+  // Step 3: Update local state
   setCurrentTicket(ticket);
 };
 ```
 
-### Backend端流程
+### Backend Side Flow
 
 ```javascript
-// Step 4: 接收请求
+// Step 4: Receive request
 app.post('/api/queue/next', async (req, res) => {
   const { counterId } = req.body;
   
-  // Step 5: 从数据库获取下一个票号
+  // Step 5: Get next ticket from database
   const nextTicket = await db.tickets.findFirst({
     where: { status: 'waiting' },
     orderBy: { timestamp: 'asc' }
   });
   
-  // Step 6: 更新票据状态
+  // Step 6: Update ticket status
   await db.tickets.update({
     where: { id: nextTicket.id },
     data: { 
@@ -144,7 +144,7 @@ app.post('/api/queue/next', async (req, res) => {
     }
   });
   
-  // Step 7: 获取完整的Display数据
+  // Step 7: Get complete Display data
   const displayData = {
     currentTicket: nextTicket,
     nextTickets: await getNextTickets(),
@@ -153,41 +153,41 @@ app.post('/api/queue/next', async (req, res) => {
     lastUpdated: new Date()
   };
   
-  // Step 8: 通过WebSocket广播给所有Display
+  // Step 8: Broadcast to all Displays via WebSocket
   io.to('displays').emit('queue-update', displayData);
   
-  // Step 9: 返回响应给Officer
+  // Step 9: Return response to Officer
   res.json(nextTicket);
 });
 ```
 
-### Display端流程
+### Display Side Flow
 
 ```javascript
-// Step 10: Display监听WebSocket消息
+// Step 10: Display listens to WebSocket messages
 useEffect(() => {
   const socket = io('http://localhost:3000');
   
-  // 连接成功后加入房间
+  // Join room after connection
   socket.on('connect', () => {
     socket.emit('join-display');
   });
   
-  // Step 11: 监听队列更新
+  // Step 11: Listen for queue updates
   socket.on('queue-update', (data) => {
-    console.log('收到更新:', data);
+    console.log('Received update:', data);
     
-    // Step 12: 更新React状态
+    // Step 12: Update React state
     setDisplayInfo(data);
     
-    // Step 13: React自动重新渲染UI
-    // 无需额外代码，React会自动检测状态变化
+    // Step 13: React automatically re-renders UI
+    // No extra code needed, React detects state changes
   });
   
   return () => socket.close();
 }, []);
 
-// Step 14: 渲染UI
+// Step 14: Render UI
 return (
   <div>
     <h1>Currently Serving</h1>
@@ -197,7 +197,7 @@ return (
 );
 ```
 
-## 多Display同步
+## Multiple Display Synchronization
 
 ```
 ┌──────────┐
@@ -209,41 +209,41 @@ return (
 └──────────┘    │     │(WebSocket)│       └──────────┘
                 │     └──────────┘
 ┌──────────┐    │           │
-│ Display3 │────┘           │ 广播给所有
-└──────────┘                │ 在'displays'
-                            │ 房间的客户端
+│ Display3 │────┘           │ Broadcast to all
+└──────────┘                │ clients in
+                            │ 'displays' room
                             ↓
-                     所有Display同时更新
+                     All Displays update simultaneously
 ```
 
-### 房间机制
+### Room Mechanism
 
 ```javascript
-// 后端 - Socket.IO房间管理
+// Backend - Socket.IO Room Management
 io.on('connection', (socket) => {
   
-  // Display加入displays房间
+  // Display joins displays room
   socket.on('join-display', () => {
     socket.join('displays');
-    console.log('Display加入，房间内客户端数:', 
+    console.log('Display joined, clients in room:', 
                 io.sockets.adapter.rooms.get('displays').size);
   });
   
-  // Officer加入officer房间
+  // Officer joins officer room
   socket.on('join-officer', (officerId) => {
     socket.join('officer-room');
-    socket.join(`officer-${officerId}`); // 个人房间
+    socket.join(`officer-${officerId}`); // Individual room
   });
 });
 
-// 广播到特定房间
-io.to('displays').emit('queue-update', data);  // 只有Display收到
-io.to('officer-room').emit('notification', msg); // 只有Officer收到
+// Broadcast to specific room
+io.to('displays').emit('queue-update', data);  // Only Display receives
+io.to('officer-room').emit('notification', msg); // Only Officer receives
 ```
 
-## 数据结构
+## Data Structure
 
-### DisplayInfo 数据格式
+### DisplayInfo Data Format
 
 ```typescript
 {
@@ -290,113 +290,113 @@ io.to('officer-room').emit('notification', msg); // 只有Officer收到
 }
 ```
 
-## 时间线示例
+## Timeline Example
 
 ```
-时间轴 (毫秒)
+Timeline (milliseconds)
 │
-0ms   │ Officer点击"Call Next"按钮
+0ms   │ Officer clicks "Call Next" button
       │
-10ms  │ HTTP请求到达后端
+10ms  │ HTTP request reaches backend
       │
-15ms  │ 数据库查询开始
+15ms  │ Database query starts
       │
-25ms  │ 数据库返回票号A002
+25ms  │ Database returns ticket A002
       │
-30ms  │ 更新票据状态为'serving'
+30ms  │ Update ticket status to 'serving'
       │
-40ms  │ 构建完整DisplayInfo数据
+40ms  │ Build complete DisplayInfo data
       │
-45ms  │ WebSocket广播消息
+45ms  │ WebSocket broadcast message
       │
-50ms  │ Display1收到消息 ← 几乎同时
-      │ Display2收到消息
-      │ Display3收到消息
+50ms  │ Display1 receives message ← Almost simultaneously
+      │ Display2 receives message
+      │ Display3 receives message
       │
-52ms  │ 所有Display的React状态更新
+52ms  │ All Displays' React state updated
       │
-55ms  │ 所有Display的UI重新渲染完成
+55ms  │ All Displays' UI re-render completed
       │
-60ms  │ HTTP响应返回给Officer
+60ms  │ HTTP response returns to Officer
       │
-65ms  │ Officer界面更新
+65ms  │ Officer UI updates
       │
       ↓
 ```
 
-**总延迟：约50-60毫秒** ⚡
+**Total Latency: ~50-60 milliseconds** ⚡
 
-## 断线重连机制
+## Reconnection Mechanism
 
 ```
 ┌──────────┐                    ┌──────────┐
 │ Display  │                    │  Server  │
 └──────────┘                    └──────────┘
      │                                │
-     │ ① 正常连接                      │
+     │ ① Normal connection            │
      │<──────────────────────────────>│
      │                                │
-     │ ② 网络断开                      │
+     │ ② Network disconnected         │
      │xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
      │                                
-     │ ③ 自动重连 (尝试1)              
+     │ ③ Auto reconnect (Attempt 1)   
      │────────────────────────────────>
      │                                
-     │ ④ 重连失败                      
+     │ ④ Reconnection failed          
      │                                
-     │ ⑤ 自动重连 (尝试2，延迟1秒)     
+     │ ⑤ Auto reconnect (Attempt 2, 1s delay)
      │────────────────────────────────>
      │                                │
-     │ ⑥ 重连成功                      │
+     │ ⑥ Reconnection successful      │
      │<──────────────────────────────>│
      │                                │
-     │ ⑦ 重新加入房间                  │
+     │ ⑦ Rejoin room                  │
      │────────────────────────────────>│
      │                                │
-     │ ⑧ 接收最新数据                  │
+     │ ⑧ Receive latest data          │
      │<────────────────────────────────│
      │                                │
-     │ ⑨ 继续监听更新                  │
+     │ ⑨ Continue listening           │
      │                                │
 ```
 
-### 重连配置
+### Reconnection Configuration
 
 ```javascript
 const socket = io('http://localhost:3000', {
-  reconnection: true,           // 启用自动重连
-  reconnectionDelay: 1000,      // 重连延迟1秒
-  reconnectionAttempts: 10,     // 最多尝试10次
-  timeout: 5000                 // 连接超时5秒
+  reconnection: true,           // Enable auto-reconnect
+  reconnectionDelay: 1000,      // Reconnect delay 1 second
+  reconnectionAttempts: 10,     // Maximum 10 attempts
+  timeout: 5000                 // Connection timeout 5 seconds
 });
 
 socket.on('reconnect', (attemptNumber) => {
-  console.log('重连成功，尝试次数:', attemptNumber);
-  // 重新加入房间
+  console.log('Reconnection successful, attempts:', attemptNumber);
+  // Rejoin room
   socket.emit('join-display');
 });
 
 socket.on('reconnect_failed', () => {
-  console.log('重连失败，启用备用方案');
-  // 启用HTTP轮询作为备用
+  console.log('Reconnection failed, enabling fallback');
+  // Enable HTTP polling as fallback
   startPolling();
 });
 ```
 
-## 总结
+## Summary
 
-### 关键点
+### Key Points
 
-✅ **WebSocket提供实时双向通信**
-✅ **房间机制实现精准推送**
-✅ **React状态管理触发UI更新**
-✅ **自动重连保证可靠性**
-✅ **整个流程延迟<100ms**
+✅ **WebSocket provides real-time bidirectional communication**
+✅ **Room mechanism enables precise broadcasting**
+✅ **React state management triggers UI updates**
+✅ **Auto-reconnect ensures reliability**
+✅ **Entire process latency <100ms**
 
-### 优势
+### Advantages
 
-- ⚡ **实时性强** - 无延迟，即时更新
-- 🔄 **自动同步** - 所有Display同时更新
-- 💪 **可靠性高** - 自动重连，fallback机制
-- 📊 **可扩展** - 支持无限多个Display屏幕
-- 🎯 **精准推送** - 房间机制避免广播浪费
+- ⚡ **Real-time** - No delay, instant updates
+- 🔄 **Auto-sync** - All Displays update simultaneously
+- 💪 **High reliability** - Auto-reconnect, fallback mechanism
+- 📊 **Scalable** - Supports unlimited Display screens
+- 🎯 **Precise push** - Room mechanism avoids broadcast waste

@@ -8,6 +8,8 @@ interface HeaderProps {
   isHomePage: boolean;
   /** Flag indicating if current page is customer page */
   isCustomerPage: boolean;
+  /** Flag indicating if current page is officer page */
+  isOfficerPage?: boolean;
   /** Callback function for back button click */
   onBack: () => void;
 }
@@ -16,11 +18,10 @@ interface HeaderProps {
  * Header component that displays the navigation bar
  * Shows different content based on current page and provides navigation
  */
-const Header = ({ isHomePage, isCustomerPage, onBack }: HeaderProps) => {
+const Header = ({ isHomePage, isCustomerPage, isOfficerPage, onBack }: HeaderProps) => {
   /**
    * Renders the header content based on current page
-   * Shows customer icon + title for customer page
-   * Shows only title for other pages
+   * Shows appropriate icon + title for each page type
    */
   const getHeaderContent = () => {
     if (isCustomerPage) {
@@ -28,6 +29,14 @@ const Header = ({ isHomePage, isCustomerPage, onBack }: HeaderProps) => {
         <>
           <i className="fas fa-user-clock fs-3 me-3 text-white"></i>
           <h1 className="m-0 h3 text-white">Customer</h1>
+        </>
+      );
+    }
+    if (isOfficerPage) {
+      return (
+        <>
+          <i className="fas fa-user-tie fs-3 me-3 text-white"></i>
+          <h1 className="m-0 h3 text-white">Officer</h1>
         </>
       );
     }

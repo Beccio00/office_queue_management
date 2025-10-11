@@ -34,3 +34,20 @@ export type ServiceStats = {
     customersServed: number;
     averageWaitTime: number;
 };
+
+// Definizione del tipo per un officer (impiegato)
+export type Officer = {
+    id: number;
+    name: string;
+    counterId: number;
+    isAvailable: boolean;
+};
+
+// Definizione del tipo per il display pubblico
+export type DisplayInfo = {
+    currentTicket: Ticket | null;
+    nextTickets: Ticket[];
+    queueStatus: Queue[];
+    counters: Counter[];
+    lastUpdated: Date;
+};

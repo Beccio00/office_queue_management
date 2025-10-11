@@ -10,18 +10,59 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+ 
+model Service {
+  id               Int        @id @default(autoincrement())
+  name             String     @unique
+  tag              String     // e.g., "A", "B", "C" TODO: enforce single character and uppercase at app level it is impossible with sqlite
+  avgServiceTime   Int       
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
+  tickets          Ticket[]   
+  counters         CounterService[]
+
+  @@map("services")
 }
 
-model Office {
-  id        Int      @id @default(autoincrement())
-  name      String
-  location  String
-  createdAt DateTime @default(now())
+model Counter {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique 
+  isActive    Boolean          @default(true)
+
+  tickets     Ticket[]
+  services    CounterService[]
+
+  @@map("counters")
+}
+
+model CounterService {
+  counterId   Int
+  serviceId   Int
+
+  counter     Counter  @relation(fields: [counterId], references: [id])
+  service     Service  @relation(fields: [serviceId], references: [id])
+
+  @@id([counterId, serviceId])
+  @@map("counter_services")
+}
+
+model Ticket {
+  id          Int        @id @default(autoincrement())
+  code        String     @unique
+  issuedAt    DateTime   @default(now())
+  servedAt    DateTime?  
+  status      TicketStatus @default(WAITING)
+
+  serviceId   Int
+  service     Service     @relation(fields: [serviceId], references: [id])
+
+  counterId   Int?
+  counter     Counter?    @relation(fields: [counterId], references: [id])
+
+  @@map("tickets")
+}
+
+enum TicketStatus {
+  WAITING
+  SERVING
+  SERVED
 }

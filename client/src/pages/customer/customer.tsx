@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import type { Service, Ticket } from '../../types/index';
+
+// Tipo per lo stato del ticket
+type TicketStatus = 'waiting' | 'serving' | 'completed';
 
 /**
  * Customer page component for ticket generation system
@@ -13,13 +16,30 @@ const Customer = () => {
   // State management for service selection and ticket generation
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [ticket, setTicket] = useState<Ticket | null>(null);
-
-  // Sample services data (will be replaced with API call)
-  const sampleServices: Service[] = [
-    { id: 1, name: 'Money Deposit', tag: 'DEPOSIT', serviceTime: 5 },
-    { id: 2, name: 'Package Shipping', tag: 'SHIPPING', serviceTime: 10 },
-    { id: 3, name: 'Account Management', tag: 'ACCOUNT', serviceTime: 15 }
-  ];
+  const [services, setServices] = useState<Service[]>([]);
+  const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
+  
+  // Fetch available services
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+        const response = await fetch(`${apiBaseUrl}/services`);
+        if (!response.ok) throw new Error('Failed to fetch services');
+        const data = await response.json();
+        setServices(data);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        // Fallback services data
+        setServices([
+          { id: 1, name: 'Money Deposit', tag: 'DEPOSIT', serviceTime: 5 },
+          { id: 2, name: 'Package Shipping', tag: 'SHIPPING', serviceTime: 10 },
+          { id: 3, name: 'Account Management', tag: 'ACCOUNT', serviceTime: 15 }
+        ]);
+      }
+    };
+    fetchServices();
+  }, []);
 
   /**
    * Maps service tags to their corresponding icons
@@ -31,27 +51,106 @@ const Customer = () => {
   } as const;
 
   /**
-   * Handles service selection
+   * Establishes WebSocket connection for real-time updates
    */
-  const handleServiceSelect = (service: Service) => {
+  const setupWebSocket = useCallback((requestId: string) => {
+    const wsUrl = `ws://localhost:3000/ws/tickets/${requestId}`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setTicket(prev => ({
+        ...prev!,
+        ...data,
+        timestamp: new Date(data.timestamp),
+        completionTime: data.completionTime ? new Date(data.completionTime) : undefined
+      }));
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    setWsConnection(ws);
+    
+    // Cleanup on unmount
+    return () => {
+      ws.close();
+      setWsConnection(null);
+    };
+  }, []);
+
+  /**
+   * Handles service selection and ticket request
+   */
+  const handleServiceSelect = async (service: Service) => {
     setSelectedService(service);
   };
 
   /**
-   * Generates a new ticket for the selected service
-   * Will be replaced with actual API call
+   * Requests a new ticket for the selected service
    */
-  const handleGetTicket = () => {
+  const handleGetTicket = async () => {
     if (!selectedService) return;
 
-    const newTicket: Ticket = {
-      id: Math.random().toString(36).substr(2, 9).toUpperCase(),
-      serviceType: selectedService.tag,
-      timestamp: new Date(),
-      status: 'waiting'
-    };
-    
-    setTicket(newTicket);
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+      
+      // Request new ticket
+      const response = await fetch(`${apiBaseUrl}/tickets/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serviceType: selectedService.tag
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const ticketData = await response.json();
+      setTicket({
+        ...ticketData,
+        timestamp: new Date(ticketData.timestamp)
+      });
+
+      // Setup WebSocket connection for real-time updates
+      setupWebSocket(ticketData.id);
+
+    } catch (error) {
+      console.error('Failed to request ticket:', error);
+      
+      // Fallback ticket generation
+      const fallbackTicket: Ticket = {
+        id: 'A' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+        serviceType: selectedService.tag,
+        status: 'waiting',
+        timestamp: new Date()
+      };
+      
+      setTicket(fallbackTicket);
+      alert('API not available. Using demo mode.');
+
+      // Simulate status changes in demo mode
+      setTimeout(() => {
+        setTicket(prev => ({
+          ...prev!,
+          status: 'serving' as TicketStatus
+        }));
+      }, 5000);
+
+      setTimeout(() => {
+        setTicket(prev => ({
+          ...prev!,
+          status: 'completed' as TicketStatus,
+          completionTime: new Date(),
+          message: 'Service completed successfully! 👍'
+        }));
+      }, 10000);
+    }
   };
 
   const navigate = useNavigate();
@@ -86,30 +185,47 @@ const Customer = () => {
                   <i 
                     className={`fas ${serviceIcons[ticket.serviceType as keyof typeof serviceIcons]}`}
                     style={{ 
-                      color: '#2ecc71',
+                      color: ticket.status === 'completed' ? '#2ecc71' : '#3498db',
                       margin: '15px 0',
                       display: 'block'
                     }}
                   />
                 </div>
-                <h2 className="display-6 mb-4">Your Ticket Number: <strong>{ticket.id}</strong></h2>
-                <div className="mb-4">
-                  <p className="h5 mb-3 text-secondary">Service: {selectedService?.name}</p>
-                  <p className="mb-2 text-muted">Time: {ticket.timestamp.toLocaleTimeString()}</p>
-                  <p className="mb-4 text-muted">Estimated Wait Time: {selectedService?.serviceTime} minutes</p>
-                  <Button 
-                    variant="outline-success" 
-                    size="lg"
-                    className="px-5 py-3"
-                    style={{ borderRadius: '10px' }}
-                    onClick={() => {
-                      setTicket(null);
-                      setSelectedService(null);
-                    }}
-                  >
-                    Get Another Ticket
-                  </Button>
-                </div>
+                {ticket.status === 'completed' ? (
+                  <>
+                    <h2 className="display-6 mb-4 text-success">{ticket.message}</h2>
+                    <div className="mb-4">
+                      <p className="h5 mb-3">Service: {selectedService?.name}</p>
+                      <p className="mb-2 text-muted">Started: {ticket.timestamp.toLocaleTimeString()}</p>
+                      <p className="mb-4 text-muted">Completed: {ticket.completionTime?.toLocaleTimeString()}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="display-6 mb-4">Your Ticket Number: <strong>{ticket.id}</strong></h2>
+                    <div className="mb-4">
+                      <p className="h5 mb-3 text-secondary">Service: {selectedService?.name}</p>
+                      <p className="mb-2 text-muted">Time: {ticket.timestamp.toLocaleTimeString()}</p>
+                      <p className="mb-4 text-muted">Status: {ticket.status === 'waiting' ? 'Waiting to be called' : 'Currently being served'}</p>
+                    </div>
+                  </>
+                )}
+                <Button 
+                  variant={ticket.status === 'completed' ? 'outline-success' : 'outline-primary'}
+                  size="lg"
+                  className="px-5 py-3"
+                  style={{ borderRadius: '10px' }}
+                  onClick={() => {
+                    setTicket(null);
+                    setSelectedService(null);
+                    if (wsConnection) {
+                      wsConnection.close();
+                      setWsConnection(null);
+                    }
+                  }}
+                >
+                  Get Another Ticket
+                </Button>
               </Card.Body>
             </Card>
           </Col>
@@ -118,7 +234,7 @@ const Customer = () => {
         <Row className="justify-content-center">
           <Col xs={12} lg={8} xl={6}>
             <Row className="g-4">
-              {sampleServices.map((service) => (
+              {services.map((service: Service) => (
                 <Col key={service.id} xs={12} sm={6} md={4}>
                   <Card 
                     className="h-100 border-0 bg-white shadow-lg"
@@ -167,7 +283,7 @@ const Customer = () => {
                           borderRadius: '10px',
                           background: selectedService?.id === service.id ? 'rgba(52, 152, 219, 0.1)' : 'transparent',
                           borderColor: '#3498db',
-                          fontWeight: selectedService?.id === service.id ? '600' : '400'
+                          color: '#3498db'
                         }}
                         onClick={(e) => {
                           e.stopPropagation();

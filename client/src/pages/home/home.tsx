@@ -1,7 +1,17 @@
+import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+
+// Define the type for a role card
+type RoleCard = {
+  title: string;
+  description: string;
+  route: string;
+  variant: 'primary' | 'success' | 'info';
+  icon: string;
+};
 
 // Theme colors used across the application
 const themeColors = {
@@ -18,10 +28,7 @@ const themeColors = {
  */
 const Home = () => {
   const navigate = useNavigate();
-
-  // Define card configurations for different user roles
-  // Define card configurations for each user role with their respective properties
-  const cards = [
+  const [availableRoles, setAvailableRoles] = useState<RoleCard[]>([
     {
       title: 'Customer',
       description: 'Get a ticket for your service',
@@ -43,7 +50,40 @@ const Home = () => {
       variant: 'info',
       icon: 'fa-chart-line'
     }
-  ] as const;
+  ]);
+
+  // Fetch available roles from API
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+        
+        console.log('[Role Service] Initiating roles retrieval');
+        
+        const response = await fetch(`${apiBaseUrl}/roles`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const rolesData = await response.json();
+        console.log('[Role Service] Successfully retrieved roles configuration:', rolesData);
+
+        // Update application roles with server configuration
+        if (rolesData && Array.isArray(rolesData)) {
+          setAvailableRoles(rolesData);
+        }
+
+      } catch (error) {
+        console.error('[Role Service] Failed to retrieve roles:', error);
+        console.warn('[Role Service] Reverting to default role configuration');
+        // Fallback: Keep using the default roles
+        alert('API not available. Using demo mode with default roles.');
+      }
+    };
+
+    fetchRoles();
+  }, []);
 
   return (
     <div className="d-flex flex-column vh-100 bg-light" style={{ 
@@ -69,7 +109,7 @@ const Home = () => {
             
             {/* Grid of role selection cards */}
             <Row className="justify-content-center g-4">
-              {cards.map((card) => (
+              {availableRoles.map((card) => (
                 <Col key={card.title} xs={12} sm={6} md={4}>
                   <Card 
                     className="h-100 border-0 bg-white shadow-lg transition-all"

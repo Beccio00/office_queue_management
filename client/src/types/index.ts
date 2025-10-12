@@ -1,41 +1,43 @@
-// Definizione del tipo per un servizio
+// Type definition for a service
 export type Service = {
     id: number;
     name: string;
     tag: string;
-    serviceTime: number; // tempo medio in minuti
+    serviceTime: number; // average time in minutes
 };
 
-// Definizione del tipo per un ticket
+// Type definition for a ticket
 export type Ticket = {
-    id: string;
-    serviceType: string;
-    timestamp: Date;
-    status: 'waiting' | 'serving' | 'completed';
+    id: string;                // Unique ticket ID (e.g. A123)
+    serviceType: string;       // Requested service type (service tag)
+    timestamp: Date;           // Request date/time
+    status: 'waiting' | 'serving' | 'completed';  // Ticket status
+    completionTime?: Date;     // Completion date/time (optional)
+    message?: string;          // Status/completion message (optional)
 };
 
-// Definizione del tipo per un counter (sportello)
+// Type definition for a counter
 export type Counter = {
     id: number;
     number: number;
-    availableServices: string[]; // array di tag dei servizi che può gestire
+    availableServices: string[]; // array of service tags that this counter can handle
 };
 
-// Definizione del tipo per una coda
+// Type definition for a queue
 export type Queue = {
     serviceType: string;
     length: number;
-    estimatedWaitTime: number; // in minuti
+    estimatedWaitTime: number; // in minutes
 };
 
-// Definizione del tipo per le statistiche
+// Type definition for service statistics
 export type ServiceStats = {
     serviceType: string;
     customersServed: number;
     averageWaitTime: number;
 };
 
-// Definizione del tipo per un officer (impiegato)
+// Type definition for an officer
 export type Officer = {
     id: number;
     name: string;
@@ -43,7 +45,7 @@ export type Officer = {
     isAvailable: boolean;
 };
 
-// Definizione del tipo per il display pubblico
+// Type definition for the public display
 export type DisplayInfo = {
     currentTicket: Ticket | null;
     nextTickets: Ticket[];

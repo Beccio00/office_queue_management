@@ -51,18 +51,4 @@ export class TicketService {
     });
   }
 
-  //retrieve queue information for a specific service
-  async getQueueInfo(serviceId: number) {
-    const queueLength = await prisma.ticket.count({
-      where: {
-        serviceId,
-        status: 'WAITING'
-      }
-    });
-
-    return {
-      serviceId,
-      queueLength,
-    };
-  }
 }

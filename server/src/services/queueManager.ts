@@ -2,7 +2,7 @@ import prisma from './prismaClient';
 import { EnqueueResult } from '../interfaces/enqueue';
 
 /*  Coda divisa per servizi, implementata come una mappa in-memory che associa a ogni 
-`serviceTypeId` un array di id di ticket  */
+`serviceType` un array di code di ticket  */
 
 class QueueManager {
 

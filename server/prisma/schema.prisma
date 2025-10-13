@@ -28,25 +28,27 @@ model Office {
 
 //getTicket task 
 
-model ServiceType {
-  id        String   @id @default(cuid()) //global unique identifier for the db
+model Service {
+  id        Int      @id @default(autoincrement()) //global unique identifier for the db
   tag       String   @unique //unique service identifier code
   name      String   
   tickets   Ticket[]               //one service can have many tickets
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@map("services")    //map to "services" table in the db
 }
 
 model Ticket {
-  id           String   @id @default(cuid())  //global unique identifier for the db
-  ticketCode   String   @unique //unique ticket identifier code(visible to the user)
-  serviceType  ServiceType @relation(fields: [serviceTypeId], references: [id])
-  serviceTypeId String
+  id           Int      @id @default(autoincrement())  //global unique identifier for the db
+  code         String   @unique //unique ticket identifier code(visible to the user)
+  service      Service  @relation(fields: [serviceId], references: [id])
+  serviceId    Int
   status       TicketStatus @default(WAITING)
   calledAt     DateTime?
   servedAt     DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@map("tickets")   //map to "tickets" table in the db
 }
 
 enum TicketStatus {

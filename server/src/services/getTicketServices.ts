@@ -7,24 +7,24 @@ export class TicketService {
   
   //new ticket creation for a specific service
   async createTicket(request: CreateTicketRequest): Promise<CreateTicketResponse> {
-    const { serviceTypeId } = request;
+    const { serviceId } = request;
 
-    //check if the service type exists
-    const serviceType = await prisma.serviceType.findUnique({
-      where: { id: serviceTypeId }
+    //check if the service exists
+    const service = await prisma.service.findUnique({
+      where: { id: serviceId }
     });
 
-    if (!serviceType) {
-      throw new Error('Service type not found');
+    if (!service) {
+      throw new Error('Service not found');
     }
 
     //compute the next ticket code
-    const ticketCode = await this.generateTicketCode(serviceType.tag);
+    const ticketCode = await this.generateTicketCode(service.tag);
 
     //find the current queue length
     const queueLength = await prisma.ticket.count({
       where: {
-        serviceTypeId,
+        serviceId: service.id,
         status: 'WAITING'
       }
     });
@@ -33,29 +33,29 @@ export class TicketService {
     const ticket = await prisma.ticket.create({
       data: {
         ticketCode,
-        serviceTypeId,
+        serviceId: service.id,
         status: 'WAITING'
       },
       include: {
-        serviceType: true
+        service: true
       }
     });
 
     return {
       ticket: {
         id: ticket.id,
-        ticketCode: ticket.ticketCode,
-        serviceType: {
-          id: ticket.serviceType.id,
-          tag: ticket.serviceType.tag,
-          name: ticket.serviceType.name,
+        code: ticket.code,
+        service: {
+          id: ticket.service.id,
+          tag: ticket.service.tag,
+          name: ticket.service.name,
         },
         queueLength: queueLength + 1, //+1 because of the ticket just created
         positionInQueue: queueLength + 1,
         createdAt: ticket.createdAt
       },
       queueInfo: {
-        serviceTypeId,
+        serviceId: service.id,
         queueLength: queueLength + 1,
       }
     };
@@ -99,16 +99,16 @@ export class TicketService {
   }
 
   //retrieve queue information for a specific service
-  async getQueueInfo(serviceTypeId: string) {
+  async getQueueInfo(serviceId: number) {
     const queueLength = await prisma.ticket.count({
       where: {
-        serviceTypeId,
+        serviceId,
         status: 'WAITING'
       }
     });
 
     return {
-      serviceTypeId,
+      serviceId,
       queueLength,
     };
   }

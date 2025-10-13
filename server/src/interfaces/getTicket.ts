@@ -1,6 +1,6 @@
 
 export interface CreateTicketRequest {
-  serviceTypeId: string;    //customer has only to select the service type
+  serviceId: number;    //customer has only to select the service type
 }
 
 //minimum input from the customer for security reasons
@@ -8,10 +8,10 @@ export interface CreateTicketRequest {
 
 export interface CreateTicketResponse {
   ticket: {
-    id: string;
-    ticketCode: string;
-    serviceType: {
-      id: string;
+    id: number;
+    code: string;
+    service: {
+      id: number;
       tag: string;
       name: string;
     };
@@ -20,13 +20,13 @@ export interface CreateTicketResponse {
     createdAt: Date;
   };
   queueInfo: {
-    serviceTypeId: string;
+    serviceId: number;
     queueLength: number;
   };
 }
 
 export interface ServiceTypeResponse {
-  id: string;
+  id: number;
   tag: string;
   name: string;
 }

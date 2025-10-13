@@ -1,32 +1,23 @@
 import prisma from './prismaClient';
+import { EnqueueResult } from '../interfaces/enqueue';
 
 /*  Coda divisa per servizi, implementata come una mappa in-memory che associa a ogni 
 `serviceTypeId` un array di id di ticket  */
 
-/*  Tipo locale che descrive il valore restituito da `enqueue`  */
-interface EnqueueResult {
-  id: string;
-  ticketCode: string;
-  serviceTypeId: string;
-  positionInQueue: number;
-  queueLength: number;
-  createdAt: Date;
-}
-
 class QueueManager {
 
   private static instance: QueueManager | null = null;
-  private queues: Map<string, string[]> = new Map();
+  private queues: Map<number, string[]> = new Map();
 
   private constructor() {}
 
   /*    Inizializza la coda per un certo servizio prendendo dal DB gli id dei ticket WAITING di quel servizio    */
-  private async ensureQueueLoaded(serviceTypeId: string) {
-    if (this.queues.has(serviceTypeId)) return;
+  private async ensureQueueLoaded(serviceId: number) {
+    if (this.queues.has(serviceId)) return;
 
     const waitingTickets: Array<{ id: string }> = await prisma.ticket.findMany({
       where: {
-        serviceTypeId,
+        serviceId,
         status: 'WAITING'
       },
       orderBy: {
@@ -38,7 +29,7 @@ class QueueManager {
     });
 
 
-    this.queues.set(serviceTypeId, waitingTickets.map(t => t.id));
+    this.queues.set(serviceId, waitingTickets.map(t => t.id));
   }
   
   /*    Restituisce l'istanza del singleton    */
@@ -50,11 +41,11 @@ class QueueManager {
   }
 
   /*    Inserisce un nuovo ticket nella coda per il suo tipo di servizio    */
-  async enqueue(serviceTypeId: string): Promise<EnqueueResult> {
+  async enqueue(serviceId: number): Promise<EnqueueResult> {
 
     // verifica che il tipo di servizio esista
-    const serviceType = await prisma.serviceType.findUnique({ 
-        where: { id: serviceTypeId } 
+    const serviceType = await prisma.service.findUnique({ 
+        where: { id: serviceId } 
     });
     if (!serviceType) throw new Error('Service type not found');
 
@@ -62,36 +53,21 @@ class QueueManager {
     const ticketCode = await this.generateTicketCode(serviceType.tag);
 
     // inizializza la coda per questo serviceType
-    await this.ensureQueueLoaded(serviceTypeId);
+    await this.ensureQueueLoaded(serviceType.id);
 
     // calcolo la posizione in coda del nuovo ticket
-    const queue = this.queues.get(serviceTypeId) || [];
+    const queue = this.queues.get(serviceType.id) || [];
     const position = queue.length + 1;
 
-    // crea il ticket nel database
-    const ticket = await prisma.ticket.create({
-      data: {
-        ticketCode,
-        serviceTypeId,
-        status: 'WAITING'
-      },
-      include: {
-        serviceType: true
-      }
-    });
-
     // aggiorna la coda in-memory
-    queue.push(ticket.id);
-    this.queues.set(serviceTypeId, queue);
-
-    return {
-      id: ticket.id,
-      ticketCode: ticket.ticketCode,
-      serviceTypeId: ticket.serviceTypeId,
+    queue.push(ticketCode);
+    this.queues.set(serviceType.id, queue);
+    
+    return ({
+      code: ticketCode,
       positionInQueue: position,
-      queueLength: queue.length,
-      createdAt: ticket.createdAt
-    };
+      queueLength: queue.length
+    });
   }
 
   /**
@@ -123,18 +99,6 @@ class QueueManager {
     return `${serviceTag}-${dateStr}-${sequenceNumber}`;
   }
 
-  // Restituisce la lunghezza della coda
-  async getQueueLength(serviceTypeId: string): Promise<number> {
-    /*
-    return await prisma.ticket.count({
-      where: {
-        serviceTypeId,
-        status: 'WAITING'
-      }
-    });
-    */
-    return (this.queues.get(serviceTypeId) || []).length;
-  }
 }
 
 // esportiamo l'istanza singleton pronta all'uso

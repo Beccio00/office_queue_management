@@ -19,10 +19,6 @@ export interface CreateTicketResponse {
     positionInQueue: number;
     createdAt: Date;
   };
-  queueInfo: {
-    serviceId: number;
-    queueLength: number;
-  };
 }
 
 export interface ServiceTypeResponse {

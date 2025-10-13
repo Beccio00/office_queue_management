@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
@@ -13,22 +12,15 @@ type RoleCard = {
   icon: string;
 };
 
-// Theme colors used across the application
-const themeColors = {
-  primary: '#3498db',
-  success: '#2ecc71',
-  info: '#00bcd4',
-  text: '#2c3e50',
-  subText: '#7f8c8d',
-} as const;
-
 /**
  * Home component that serves as the landing page of the Queue Management System.
  * It displays three role-based access cards: Customer, Officer, and Manager.
  */
 const Home = () => {
   const navigate = useNavigate();
-  const [availableRoles, setAvailableRoles] = useState<RoleCard[]>([
+  
+  // Available roles - these are static and don't need to be fetched from API
+  const availableRoles: RoleCard[] = [
     {
       title: 'Customer',
       description: 'Get a ticket for your service',
@@ -50,40 +42,7 @@ const Home = () => {
       variant: 'info',
       icon: 'fa-chart-line'
     }
-  ]);
-
-  // Fetch available roles from API
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-        
-        console.log('[Role Service] Initiating roles retrieval');
-        
-        const response = await fetch(`${apiBaseUrl}/roles`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const rolesData = await response.json();
-        console.log('[Role Service] Successfully retrieved roles configuration:', rolesData);
-
-        // Update application roles with server configuration
-        if (rolesData && Array.isArray(rolesData)) {
-          setAvailableRoles(rolesData);
-        }
-
-      } catch (error) {
-        console.error('[Role Service] Failed to retrieve roles:', error);
-        console.warn('[Role Service] Reverting to default role configuration');
-        // Fallback: Keep using the default roles
-        alert('API not available. Using demo mode with default roles.');
-      }
-    };
-
-    fetchRoles();
-  }, []);
+  ];
 
   return (
     <div className="d-flex flex-column vh-100 bg-light" style={{ 
@@ -169,6 +128,51 @@ const Home = () => {
                   </Card>
                 </Col>
               ))}
+            </Row>
+
+            {/* Display Screen Section */}
+            <Row className="justify-content-center mt-5">
+              <Col xs={12} md={8} lg={6}>
+                <Card 
+                  className="border-0 bg-white shadow-lg"
+                  style={{ 
+                    borderRadius: '15px',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div style={{ height: '4px', background: '#e74c3c' }}></div>
+                  <Card.Body className="p-4">
+                    <Row className="align-items-center">
+                      <Col xs={12} md={8}>
+                        <div className="d-flex align-items-center mb-3 mb-md-0">
+                          <i className="fas fa-tv fs-1 me-3" style={{ color: '#e74c3c' }}></i>
+                          <div>
+                            <h5 className="mb-1">Public Display Screen</h5>
+                            <p className="text-muted mb-0 small">
+                              Real-time queue status for public viewing
+                            </p>
+                          </div>
+                        </div>
+                      </Col>
+                      <Col xs={12} md={4}>
+                        <Button
+                          variant="danger"
+                          size="lg"
+                          className="w-100 border-0"
+                          style={{
+                            borderRadius: '10px',
+                            background: '#e74c3c'
+                          }}
+                          onClick={() => navigate('/display')}
+                        >
+                          <i className="fas fa-external-link-alt me-2"></i>
+                          Open Display
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              </Col>
             </Row>
           </Col>
         </Row>

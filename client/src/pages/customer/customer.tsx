@@ -112,13 +112,17 @@ const Customer = () => {
       }
 
       const ticketData = await response.json();
+      console.log('✅ Ticket received:', ticketData);
+      
       setTicket({
-        ...ticketData,
+        id: ticketData.id,
+        serviceType: ticketData.serviceType,
+        status: ticketData.status || 'waiting',
         timestamp: new Date(ticketData.timestamp)
       });
 
-      // Setup WebSocket connection for real-time updates
-      setupWebSocket(ticketData.id);
+      // Setup WebSocket connection for real-time updates (if implemented)
+      // setupWebSocket(ticketData.id);
 
     } catch (error) {
       console.error('Failed to request ticket:', error);

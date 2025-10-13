@@ -12,17 +12,17 @@ export class TicketService {
     const response = await queueManager.enqueue(serviceId);
     if (!response) throw new Error('Failed to enqueue ticket');
 
-    // fetch serviceType info for the response
-    const serviceType = await prisma.serviceType.findUnique({ where: { id: serviceId } });
-    if (!serviceType) throw new Error('Service type not found');
+    // fetch service info for the response
+    const service = await prisma.service.findUnique({ where: { id: serviceId } });
+    if (!service) throw new Error('Service type not found');
 
     //salva su prisma il ticket
     const ticket = await prisma.ticket.create({
         data: {
           code: response.code,
-          serviceTypeId: serviceType.id,
-          positionInQueue: response.positionInQueue,
-          createdAt: Date.now()
+          serviceId: service.id,
+          status: 'WAITING',
+          createdAt: new Date()
         }
     });
 
@@ -31,9 +31,9 @@ export class TicketService {
         id: ticket.id,
         code: ticket.code,
         service: {
-          id: serviceType.id,
-          tag: serviceType.tag,
-          name: serviceType.name,
+          id: service.id,
+          tag: service.tag,
+          name: service.name,
         },
         queueLength: response.queueLength,
         positionInQueue: response.positionInQueue,
@@ -44,10 +44,17 @@ export class TicketService {
 
   // return the service types available
   async getAvailableServices(): Promise<any[]> {
-    return await prisma.serviceType.findMany({
+    return await prisma.service.findMany({
       orderBy: {
         tag: 'asc'
       }
+    });
+  }
+
+  // get service by tag
+  async getServiceByTag(tag: string): Promise<any | null> {
+    return await prisma.service.findUnique({
+      where: { tag }
     });
   }
 

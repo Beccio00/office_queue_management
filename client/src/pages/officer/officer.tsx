@@ -117,13 +117,30 @@ const Officer = () => {
 
   /**
    * Calls next customer from queue
+   
    * ⭐ Calls API: POST /api/queue/next
    */
   const handleCallNextCustomer = async () => {
-    if (counterStatus !== 'available' || !currentOfficer) return;
+    if (!currentOfficer) return;
 
     try {
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+      
+      // 
+      if (currentTicket) {
+        console.log('✅ Auto-completing current ticket:', currentTicket.id);
+        
+        try {
+          await fetch(`${apiBaseUrl}/tickets/${currentTicket.id}/complete`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+        } catch (error) {
+          console.warn('Failed to complete current ticket:', error);
+        }
+      }
       
       console.log('📞 Calling next customer for counter:', currentOfficer.counterId);
       
@@ -139,17 +156,29 @@ const Officer = () => {
       });
 
       if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.message === 'No customers waiting in queue') {
+          alert('No customers waiting in queue');
+          setCurrentTicket(null);
+          setCounterStatus('available');
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const nextTicket: Ticket = await response.json();
-      console.log('✅ Next customer assigned:', nextTicket);
+      const ticketData = await response.json();
+      console.log('✅ Next customer assigned:', ticketData);
+
+      // Format the ticket data correctly
+      const nextTicket: Ticket = {
+        id: ticketData.code || ticketData.id,
+        serviceType: ticketData.serviceType,
+        timestamp: new Date(ticketData.timestamp),
+        status: 'serving'
+      };
 
       // Update state
-      setCurrentTicket({
-        ...nextTicket,
-        timestamp: new Date(nextTicket.timestamp)
-      });
+      setCurrentTicket(nextTicket);
       setCounterStatus('busy');
 
     } catch (error) {
@@ -173,8 +202,10 @@ const Officer = () => {
 
   /**
    * Completes current customer service
-   * ⭐ Calls API: PUT /api/tickets/:id/complete
+   * ⭐ This function has been automated and is now auto-completed in handleCallNextCustomer
+   * Code preserved for future reference if needed
    */
+  /* 
   const handleCompleteService = async () => {
     if (!currentTicket) return;
 
@@ -221,6 +252,7 @@ const Officer = () => {
       }, 1500);
     }
   };
+  */
 
   /**
    * Toggles counter availability
@@ -389,12 +421,13 @@ const Officer = () => {
                         </div>
                         
                         <Button 
-                          variant="success" 
+                          variant="primary" 
                           size="lg"
-                          className="w-100 mb-3"
-                          onClick={handleCompleteService}
+                          className="w-100"
+                          onClick={handleCallNextCustomer}
                         >
-                          Complete Service
+                          <i className="fas fa-arrow-right me-2"></i>
+                          Complete & Call Next
                         </Button>
                       </div>
                     ) : (
@@ -407,8 +440,8 @@ const Officer = () => {
                           size="lg"
                           className="w-100"
                           onClick={handleCallNextCustomer}
-                          disabled={counterStatus !== 'available'}
                         >
+                          <i className="fas fa-phone me-2"></i>
                           Call Next Customer
                         </Button>
                       </div>
@@ -434,15 +467,6 @@ const Officer = () => {
                       </Button>
                       
                       <Button 
-                        variant="outline-primary"
-                        size="lg"
-                        onClick={handleCallNextCustomer}
-                        disabled={counterStatus !== 'available' || !!currentTicket}
-                      >
-                        Call Next Customer
-                      </Button>
-                      
-                      <Button 
                         variant="outline-info"
                         size="lg"
                         disabled
@@ -454,9 +478,18 @@ const Officer = () => {
                     <Alert variant="info" className="mt-4">
                       <small>
                         <i className="fas fa-info-circle me-2"></i>
-                        Use the controls to manage your counter and serve customers efficiently.
+                        Use the middle button to call and serve customers.
                       </small>
                     </Alert>
+                    
+                    {currentTicket && (
+                      <Alert variant="success" className="mt-3">
+                        <small>
+                          <i className="fas fa-user-check me-2"></i>
+                          Serving customer. Click button when done to call next.
+                        </small>
+                      </Alert>
+                    )}
                   </Card.Body>
                 </Card>
               </Col>

@@ -12,18 +12,16 @@ datasource db {
 }
  
 model Service {
-  id               Int        @id @default(autoincrement())
-  name             String     @unique
-  tag              String     // e.g., "A", "B", "C" TODO: enforce single character and uppercase at app level it is impossible with sqlite
-  avgServiceTime   Int       
-
-  tickets          Ticket[]   
+  id        Int      @id @default(autoincrement()) //global unique identifier for the db
+  tag       String   @unique //unique service identifier code
+  name      String   // e.g., "A", "B", "C" TODO: enforce single character and uppercase at app level it is impossible with sqlite
+  avgServiceTime   Int    
+  tickets   Ticket[]               //one service can have many tickets
   counters         CounterService[]
 
-  @@map("services")
+  @@map("services")    //map to "services" table in the db
 }
 
-<<<<<<< HEAD
 model Counter {
   id          Int              @id @default(autoincrement())
   name        String           @unique 
@@ -47,20 +45,21 @@ model CounterService {
 }
 
 model Ticket {
-  id          Int        @id @default(autoincrement())
-  code        String     @unique
-  issuedAt    DateTime   @default(now())
-  servedAt    DateTime?  
-  status      TicketStatus @default(WAITING)
+  id           Int      @id @default(autoincrement())  //global unique identifier for the db
+  code         String   @unique //unique ticket identifier code(visible to the user)
+  service      Service  @relation(fields: [serviceId], references: [id])
+  serviceId    Int
+  status       TicketStatus @default(WAITING)
+  counterId    Int?
+  counter      Counter?    @relation(fields: [counterId], references: [id])
+  calledAt     DateTime?
+  servedAt     DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  serviceId   Int
-  service     Service     @relation(fields: [serviceId], references: [id])
+  @@map("tickets")   //map to "tickets" table in the db
+}
 
-  counterId   Int?
-  counter     Counter?    @relation(fields: [counterId], references: [id])
-
-  @@map("tickets")
-=======
 model Office {
   id        Int      @id @default(autoincrement())
   name      String
@@ -68,43 +67,9 @@ model Office {
   createdAt DateTime @default(now())
 }
 
-//getTicket task 
-
-model Service {
-  id        Int      @id @default(autoincrement()) //global unique identifier for the db
-  tag       String   @unique //unique service identifier code
-  name      String   
-  tickets   Ticket[]               //one service can have many tickets
-
-  @@map("services")    //map to "services" table in the db
-}
-
-model Ticket {
-  id           Int      @id @default(autoincrement())  //global unique identifier for the db
-  code         String   @unique //unique ticket identifier code(visible to the user)
-  service      Service  @relation(fields: [serviceId], references: [id])
-  serviceId    Int
-  status       TicketStatus @default(WAITING)
-  calledAt     DateTime?
-  servedAt     DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("tickets")   //map to "tickets" table in the db
->>>>>>> queue-implementation
-}
-
 enum TicketStatus {
   WAITING
-<<<<<<< HEAD
-  SERVING
-  SERVED
-}
-=======
   CALLED
   SERVED
   COMPLETED
 }
-
-//end getTicket task
->>>>>>> queue-implementation

@@ -49,23 +49,4 @@ export class TicketController {
       });
     }
   }
-
-  async getQueueInfo(req: Request, res: Response) {
-    try {
-      const { serviceTypeId } = req.params;
-      
-      const queueInfo = await ticketService.getQueueInfo(serviceTypeId);
-      
-      res.json({
-        success: true,
-        data: queueInfo
-      });
-    } catch (error) {
-      console.error('Error fetching queue info:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch queue information'
-      });
-    }
-  }
 }

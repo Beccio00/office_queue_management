@@ -11,11 +11,11 @@ class QueueManager {
 
   private constructor() {}
 
-  /*    Inizializza la coda per un certo servizio prendendo dal DB gli id dei ticket WAITING di quel servizio    */
+  /*    Inizializza la coda per un certo servizio prendendo dal DB i code dei ticket WAITING di quel servizio    */
   private async ensureQueueLoaded(serviceId: number) {
     if (this.queues.has(serviceId)) return;
 
-    const waitingTickets: Array<{ id: string }> = await prisma.ticket.findMany({
+    const waitingTickets = await prisma.ticket.findMany({
       where: {
         serviceId,
         status: 'WAITING'
@@ -24,12 +24,11 @@ class QueueManager {
         createdAt: 'asc'
       },
       select: {
-        id: true
+        code: true
       }
     });
 
-
-    this.queues.set(serviceId, waitingTickets.map(t => t.id));
+    this.queues.set(serviceId, waitingTickets.map(t => t.code));
   }
   
   /*    Restituisce l'istanza del singleton    */
@@ -44,24 +43,24 @@ class QueueManager {
   async enqueue(serviceId: number): Promise<EnqueueResult> {
 
     // verifica che il tipo di servizio esista
-    const serviceType = await prisma.service.findUnique({ 
+    const service = await prisma.service.findUnique({ 
         where: { id: serviceId } 
     });
-    if (!serviceType) throw new Error('Service type not found');
+    if (!service) throw new Error('Service type not found');
 
     // genera il codice del ticket
-    const ticketCode = await this.generateTicketCode(serviceType.tag);
+    const ticketCode = await this.generateTicketCode(service.tag);
 
     // inizializza la coda per questo serviceType
-    await this.ensureQueueLoaded(serviceType.id);
+    await this.ensureQueueLoaded(service.id);
 
     // calcolo la posizione in coda del nuovo ticket
-    const queue = this.queues.get(serviceType.id) || [];
+    const queue = this.queues.get(service.id) || [];
     const position = queue.length + 1;
 
     // aggiorna la coda in-memory
     queue.push(ticketCode);
-    this.queues.set(serviceType.id, queue);
+    this.queues.set(service.id, queue);
     
     return ({
       code: ticketCode,
@@ -85,7 +84,7 @@ class QueueManager {
 
     const todayTicketsCount = await prisma.ticket.count({
       where: {
-        serviceType: {
+        service: {
           tag: serviceTag
         },
         createdAt: {

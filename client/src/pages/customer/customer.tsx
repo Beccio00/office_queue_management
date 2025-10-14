@@ -44,9 +44,9 @@ const Customer = () => {
    * Maps service tags to their corresponding icons
    */
   const serviceIcons = {
-    DEPOSIT: 'fa-money-bill-wave',
-    SHIPPING: 'fa-box',
-    ACCOUNT: 'fa-user-cog'
+    D: 'fa-money-bill-wave',
+    S: 'fa-box',
+    A: 'fa-user-cog'
   } as const;
 
   /**

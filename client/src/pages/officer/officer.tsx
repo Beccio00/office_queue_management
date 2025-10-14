@@ -16,37 +16,43 @@ const Officer = () => {
   // State management
   const [counterId, setCounterId] = useState<number | null>(null);
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
-  const [availableServices, setAvailableServices] = useState<Service[]>([]);
+  const [counterServices, setCounterServices] = useState<Service[]>([]);
+  const [queueStatus, setQueueStatus] = useState<Array<{serviceTag: string, serviceName: string, queueLength: number}>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch available services for display
+  // Fetch counter services and queue status when counter is selected
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const services = await API.getAvailableServices();
-        setAvailableServices(services);
-      } catch (err) {
-        console.error('Error fetching services:', err);
-      }
-    };
-    
-    fetchServices();
-  }, []);
+    if (!counterId) {
+      setCounterServices([]);
+      setQueueStatus([]);
+      return;
+    }
 
-  // Fetch available services for display
-  useEffect(() => {
-    const fetchServices = async () => {
+    const fetchCounterData = async () => {
       try {
+        // Fetch queue status
+        const response = await fetch(`http://localhost:3000/api/queue/status`);
+        if (response.ok) {
+          const status = await response.json();
+          setQueueStatus(status.data || []);
+        }
+
+        // TODO: Fetch counter-specific services when API is available
+        // For now, we fetch all services
         const services = await API.getAvailableServices();
-        setAvailableServices(services);
+        setCounterServices(services);
       } catch (err) {
-        console.error('Error fetching services:', err);
+        console.error('Error fetching counter data:', err);
       }
     };
+
+    fetchCounterData();
     
-    fetchServices();
-  }, []);
+    // Refresh queue status every 10 seconds
+    const interval = setInterval(fetchCounterData, 10000);
+    return () => clearInterval(interval);
+  }, [counterId]);
 
   /**
    * Handles counter selection
@@ -55,6 +61,8 @@ const Officer = () => {
     setCounterId(id);
     setCurrentTicket(null);
     setError(null);
+    setCounterServices([]);
+    setQueueStatus([]);
   };
 
   /**
@@ -216,18 +224,38 @@ const Officer = () => {
                     )}
                   </div>
 
-                  {/* Available Services Info */}
-                  {availableServices.length > 0 && (
+                  {/* Counter Services Info */}
+                  {counterId && counterServices.length > 0 && (
                     <Card className="mt-4 bg-light">
                       <Card.Body>
-                        <h6 className="mb-2">Counter Services</h6>
+                        <h6 className="mb-2">Counter {counterId} Services</h6>
                         <div className="d-flex flex-wrap gap-2">
-                          {availableServices.map(service => (
+                          {counterServices.map(service => (
                             <Badge key={service.id} bg="secondary">
-                              {service.name}
+                              {service.tag} - {service.name}
                             </Badge>
                           ))}
                         </div>
+                      </Card.Body>
+                    </Card>
+                  )}
+
+                  {/* Queue Status */}
+                  {counterId && queueStatus.length > 0 && (
+                    <Card className="mt-3 bg-light">
+                      <Card.Body>
+                        <h6 className="mb-3">Queue Status</h6>
+                        {queueStatus.map(queue => (
+                          <div key={queue.serviceTag} className="d-flex justify-content-between align-items-center mb-2">
+                            <span>
+                              <Badge bg="secondary" className="me-2">{queue.serviceTag}</Badge>
+                              {queue.serviceName}
+                            </span>
+                            <Badge bg={queue.queueLength > 0 ? 'info' : 'secondary'}>
+                              {queue.queueLength} waiting
+                            </Badge>
+                          </div>
+                        ))}
                       </Card.Body>
                     </Card>
                   )}

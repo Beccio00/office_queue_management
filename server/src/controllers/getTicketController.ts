@@ -8,6 +8,8 @@ const ticketService = new TicketService();
 
 export class TicketController {
 
+  //FIXME: Now the name thiket became like S-20251014-002 indeed it should be S002
+
   async createTicket(req: Request, res: Response) {
     try {
       const { serviceType, serviceId } = req.body;

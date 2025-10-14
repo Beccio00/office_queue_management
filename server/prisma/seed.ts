@@ -15,7 +15,8 @@ async function main() {
   console.log('📋 Creating services...');
   const depositService = await prisma.service.create({
     data: {
-      tag: 'DEPOSIT',
+      id: 1,
+      tag: 'D',
       name: 'Money Deposit',
       avgServiceTime: 5
     }
@@ -23,7 +24,8 @@ async function main() {
 
   const shippingService = await prisma.service.create({
     data: {
-      tag: 'SHIPPING',
+      id: 2,
+      tag: 'S',
       name: 'Package Shipping',
       avgServiceTime: 10
     }
@@ -31,7 +33,8 @@ async function main() {
 
   const accountService = await prisma.service.create({
     data: {
-      tag: 'ACCOUNT',
+      id: 3,
+      tag: 'A',
       name: 'Account Management',
       avgServiceTime: 15
     }
@@ -47,6 +50,7 @@ async function main() {
   console.log('🪟 Creating counters...');
   const counter1 = await prisma.counter.create({
     data: {
+      id: 1,
       name: 'Counter 1',
       isActive: true
     }
@@ -54,6 +58,7 @@ async function main() {
 
   const counter2 = await prisma.counter.create({
     data: {
+      id:2,
       name: 'Counter 2',
       isActive: true
     }
@@ -61,6 +66,7 @@ async function main() {
 
   const counter3 = await prisma.counter.create({
     data: {
+      id: 3,
       name: 'Counter 3',
       isActive: true
     }

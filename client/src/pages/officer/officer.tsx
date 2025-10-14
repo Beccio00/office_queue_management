@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Button, Badge, Alert } from 'react-bootstrap
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import type { Service, Ticket, Counter, Officer } from '../../types/index';
+import type { Service, Ticket, Counter, Officer as OfficerType } from '../../../../shared/types';
 
 /**
  * Officer page component for queue management system
@@ -11,14 +11,14 @@ import type { Service, Ticket, Counter, Officer } from '../../types/index';
  */
 const Officer = () => {
   // State management for officer operations
-  const [currentOfficer, setCurrentOfficer] = useState<Officer | null>(null);
+  const [currentOfficer, setCurrentOfficer] = useState<OfficerType | null>(null);
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [counterStatus, setCounterStatus] = useState<'available' | 'busy' | 'offline'>('offline');
 
   // Sample data (will be replaced with API calls)
-  const sampleOfficers: Officer[] = [
+  const sampleOfficers: OfficerType[] = [
     { id: 1, name: 'John Smith', counterId: 1, isAvailable: true },
     { id: 2, name: 'Sarah Johnson', counterId: 2, isAvailable: true },
     { id: 3, name: 'Mike Wilson', counterId: 3, isAvailable: false }
@@ -40,7 +40,7 @@ const Officer = () => {
    * Handles officer login
    * ⭐ Calls API: POST /api/officers/login
    */
-  const handleLogin = async (officer: Officer) => {
+  const handleLogin = async (officer: OfficerType) => {
     try {
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
       
@@ -401,7 +401,6 @@ const Officer = () => {
                 </Card>
               </Col>
 
-              {/* Current Customer Card */}
               <Col xs={12} md={4}>
                 <Card className="border-0 bg-white shadow-sm h-100">
                   <Card.Body className="p-4">
@@ -450,7 +449,6 @@ const Officer = () => {
                 </Card>
               </Col>
 
-              {/* Counter Controls Card */}
               <Col xs={12} md={4}>
                 <Card className="border-0 bg-white shadow-sm h-100">
                   <Card.Body className="p-4">
@@ -497,8 +495,6 @@ const Officer = () => {
           )}
         </Container>
       </main>
-
-      {/* Footer */}
       <Footer />
     </div>
   );

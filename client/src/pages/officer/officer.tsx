@@ -401,7 +401,6 @@ const Officer = () => {
                 </Card>
               </Col>
 
-              {/* Current Customer Card */}
               <Col xs={12} md={4}>
                 <Card className="border-0 bg-white shadow-sm h-100">
                   <Card.Body className="p-4">
@@ -450,7 +449,6 @@ const Officer = () => {
                 </Card>
               </Col>
 
-              {/* Counter Controls Card */}
               <Col xs={12} md={4}>
                 <Card className="border-0 bg-white shadow-sm h-100">
                   <Card.Body className="p-4">
@@ -497,8 +495,6 @@ const Officer = () => {
           )}
         </Container>
       </main>
-
-      {/* Footer */}
       <Footer />
     </div>
   );

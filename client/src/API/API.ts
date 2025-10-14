@@ -32,3 +32,5 @@ API.getAvailableServices = async () => {
 
   return response.json();
 }
+
+export default API;

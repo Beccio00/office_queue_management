@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Alert, Form, Spinner } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import API from '../../API/API';
@@ -29,16 +28,13 @@ const Officer = () => {
 
     const fetchCounterData = async () => {
       try {
-        // Fetch queue status
         const response = await fetch(`http://localhost:3000/api/queue/status`);
         if (response.ok) {
           const status = await response.json();
           setQueueStatus(status.data || []);
         }
 
-        // TODO: Fetch counter-specific services when API is available
-        // For now, we fetch all services
-        const services = await API.getAvailableServices();
+        const services = await API.getCounterServices(counterId);
         setCounterServices(services);
       } catch (err) {
         console.error('Error fetching counter data:', err);

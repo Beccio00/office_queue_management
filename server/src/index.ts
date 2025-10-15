@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from "express";
 import ticketRoutes from './routes/getTicketRoutes';
 import serviceRoutes from './routes/serviceRoutes';
 import queueRoutes from './routes/queueRoutes';
+import counterRoutes from './routes/counterRoutes';
 import { errorMiddleware } from "./middleware/errorMiddleware";
 
 const app: Express = express();
@@ -32,7 +33,8 @@ app.get("/", (req: Request, res: Response) => {
     endpoints: {
       tickets: "/api/tickets",
       services: "/api/services",
-      queue: "/api/queue"
+      queue: "/api/queue",
+      counter: "/api/counter"
     }
   });
 });
@@ -40,6 +42,7 @@ app.get("/", (req: Request, res: Response) => {
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/queue', queueRoutes);
+app.use('/api/counter', counterRoutes);
 
 // Error handling middleware
 app.use(errorMiddleware);

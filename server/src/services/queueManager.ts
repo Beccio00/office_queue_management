@@ -1,8 +1,8 @@
 import prisma from './prismaClient';
 import { EnqueueResult } from '../interfaces/enqueue';
-import { NotFoundError } from '../ErrorHandlers/NotFoundError';
-import { InternalServerError } from '../ErrorHandlers/InternalServerError';
-import { AppError } from '../ErrorHandlers/AppError';
+import { NotFoundError } from '../interfaces/errors/NotFoundError';
+import { InternalServerError } from '../interfaces/errors/InternalServerError';
+import { AppError } from '../interfaces/errors/AppError';
 
 /*  Coda divisa per servizi, implementata come una mappa in-memory che associa a ogni 
 `serviceType` un array di code di ticket  */

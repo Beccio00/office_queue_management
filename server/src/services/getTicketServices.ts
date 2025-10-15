@@ -1,10 +1,10 @@
 import prisma from './prismaClient';
 import { CreateTicketRequest, CreateTicketResponse } from '../interfaces/getTicket';
 import { queueManager } from './queueManager';
-import { NotFoundError } from '../ErrorHandlers/NotFoundError';
-import { ConflictError } from '../ErrorHandlers/ConflictError';
-import { InternalServerError } from '../ErrorHandlers/InternalServerError';
-import { AppError } from '../ErrorHandlers/AppError';
+import { NotFoundError } from '../interfaces/errors/NotFoundError';
+import { ConflictError } from '../interfaces/errors/ConflictError';
+import { InternalServerError } from '../interfaces/errors/InternalServerError';
+import { AppError } from '../interfaces/errors/AppError';
 
 export class TicketService {
 

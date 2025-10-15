@@ -92,7 +92,6 @@ class QueueManager {
 
     try {
       const today = new Date();
-      const dateStr = today.toISOString().split('T')[0].replace(/-/g, ''); //extract only YYYYMMDD
 
       // conteggio dei ticket di oggi per questo servizio
       const startOfDay = new Date(today.setHours(0, 0, 0, 0));
@@ -111,7 +110,7 @@ class QueueManager {
       });
 
       const sequenceNumber = (todayTicketsCount + 1).toString().padStart(3, '0');
-      return `${serviceTag}-${dateStr}-${sequenceNumber}`;
+      return `${serviceTag}-${sequenceNumber}`;
       
     } catch (error) {
       throw new InternalServerError('Failed to generate ticket code');

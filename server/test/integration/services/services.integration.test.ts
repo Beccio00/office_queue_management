@@ -38,6 +38,7 @@ describe("GET /api/services - extra checks", () => {
       id: number;
       tag: string;
       name: string;
+      avgServiceTime?: number;
     }>;
     const tags = services.map((s) => s.tag);
     // seed uses single-letter tags: D (Money Deposit), S (Package Shipping), A (Account Management)
@@ -56,7 +57,8 @@ describe("GET /api/services - extra checks", () => {
     expect(res.status).toBe(200);
     res.body.forEach((s: any) => {
       const keys = Object.keys(s).sort();
-      expect(keys).toEqual(["id", "name", "tag"]);
+      // server now exposes avgServiceTime; allow it in the response shape
+      expect(keys).toEqual(["avgServiceTime", "id", "name", "tag"]);
     });
   });
 });

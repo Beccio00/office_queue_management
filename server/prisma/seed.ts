@@ -17,6 +17,7 @@ async function main() {
       id: 1,
       tag: "D",
       name: "Money Deposit",
+      avgServiceTime: 5,
     },
   });
 
@@ -25,6 +26,7 @@ async function main() {
       id: 2,
       tag: "S",
       name: "Package Shipping",
+      avgServiceTime: 7,
     },
   });
 
@@ -33,6 +35,7 @@ async function main() {
       id: 3,
       tag: "A",
       name: "Account Management",
+      avgServiceTime: 10,
     },
   });
 
@@ -46,22 +49,22 @@ async function main() {
   const counter1 = await prisma.counter.create({
     data: {
       id: 1,
-      name: 'Counter 1'
-    }
+      name: "Counter 1",
+    },
   });
 
   const counter2 = await prisma.counter.create({
     data: {
       id: 2,
-      name: 'Counter 2'
-    }
+      name: "Counter 2",
+    },
   });
 
   const counter3 = await prisma.counter.create({
     data: {
       id: 3,
-      name: 'Counter 3'
-    }
+      name: "Counter 3",
+    },
   });
 
   console.log("Counters created:", {

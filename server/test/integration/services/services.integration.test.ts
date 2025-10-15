@@ -30,4 +30,33 @@ describe("GET /api/services", () => {
   });
 });
 
-//TODO: check tests above and add more
+describe("GET /api/services - extra checks", () => {
+  it("contains expected service tags from seed and correct names", async () => {
+    const res = await request(app).get("/api/services");
+    expect(res.status).toBe(200);
+    const services = res.body as Array<{
+      id: number;
+      tag: string;
+      name: string;
+    }>;
+    const tags = services.map((s) => s.tag);
+    // seed uses single-letter tags: D (Money Deposit), S (Package Shipping), A (Account Management)
+    const expectedTags = ["D", "S", "A"];
+    expectedTags.forEach((t) => expect(tags).toContain(t));
+
+    // Verify tag -> name mapping from seed
+    const map = Object.fromEntries(services.map((s) => [s.tag, s.name]));
+    expect(map["D"]).toBe("Money Deposit");
+    expect(map["S"]).toBe("Package Shipping");
+    expect(map["A"]).toBe("Account Management");
+  });
+
+  it("each service object exposes exactly id, tag and name", async () => {
+    const res = await request(app).get("/api/services");
+    expect(res.status).toBe(200);
+    res.body.forEach((s: any) => {
+      const keys = Object.keys(s).sort();
+      expect(keys).toEqual(["id", "name", "tag"]);
+    });
+  });
+});

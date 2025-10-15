@@ -36,7 +36,8 @@ export class TicketController {
       res.json(result.map(service => ({
         id: service.id,
         tag: service.tag,
-        name: service.name
+        name: service.name,
+        avgServiceTime: service.avgServiceTime
       })));
 
     } catch (error) {

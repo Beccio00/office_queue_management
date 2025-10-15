@@ -12,11 +12,13 @@ datasource db {
 }
  
 model Service {
-  id        Int      @id @default(autoincrement()) //global unique identifier for the db
-  tag       String   @unique //unique service identifier code
-  name      String   // e.g., "A", "B", "C" TODO: enforce single character and uppercase at app level it is impossible with sqlite  
-  tickets   Ticket[]               //one service can have many tickets
-  counters         CounterService[]
+  id                Int      @id @default(autoincrement()) //global unique identifier for the db
+  tag               String   @unique // e.g., "A", "B", "C" TODO: enforce single character and uppercase at app level it is impossible with sqlite 
+  name              String
+  avgServiceTime    Int         
+  
+  tickets           Ticket[]               //one service can have many tickets
+  counters          CounterService[]
 
   @@map("services")    //map to "services" table in the db
 }

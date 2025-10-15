@@ -1,5 +1,8 @@
 import prisma from './prismaClient';
 import { EnqueueResult } from '../interfaces/enqueue';
+import { NotFoundError } from '../interfaces/errors/NotFoundError';
+import { InternalServerError } from '../interfaces/errors/InternalServerError';
+import { AppError } from '../interfaces/errors/AppError';
 
 /*  Coda divisa per servizi, implementata come una mappa in-memory che associa a ogni 
 `serviceType` un array di code di ticket  */
@@ -11,26 +14,30 @@ class QueueManager {
 
   private constructor() {}
 
-  /*    Inizializza la coda per un certo servizio prendendo dal DB i code dei ticket WAITING di quel servizio    */
+  /*    Inizializza la coda per un certo servizio prendendo dal DB gli id dei ticket WAITING di quel servizio    */
   private async ensureQueueLoaded(serviceId: number) {
-    if (this.queues.has(serviceId)) return;
+    try {
 
-    const waitingTickets = await prisma.ticket.findMany({
-      where: {
-        serviceId,
-        status: 'WAITING'
-      },
-      orderBy: {
-        createdAt: 'asc'
-      },
-      select: {
-        code: true
-      }
-    });
+      if (this.queues.has(serviceId)) return;
+      const waitingTickets: Array<{ code: string }> = await prisma.ticket.findMany({
+        where: {
+          serviceId,
+          status: 'WAITING'
+        },
+        orderBy: {
+          createdAt: 'asc'
+        },
+        select: {
+          code: true
+        }
+      });
+      this.queues.set(serviceId, waitingTickets.map(t => t.code));
 
-    this.queues.set(serviceId, waitingTickets.map(t => t.code));
-  }
-  
+    } catch (error) {
+      throw new InternalServerError('Failed to load waiting tickets');
+    }
+}
+
   /*    Restituisce l'istanza del singleton    */
   static getInstance(): QueueManager {
     if (!QueueManager.instance) {
@@ -42,31 +49,38 @@ class QueueManager {
   /*    Inserisce un nuovo ticket nella coda per il suo tipo di servizio    */
   async enqueue(serviceId: number): Promise<EnqueueResult> {
 
-    // verifica che il tipo di servizio esista
-    const service = await prisma.service.findUnique({ 
-        where: { id: serviceId } 
-    });
-    if (!service) throw new Error('Service type not found');
+    try {
 
-    // genera il codice del ticket
-    const ticketCode = await this.generateTicketCode(service.tag);
+      // verifica che il tipo di servizio esista
+      const serviceType = await prisma.service.findUnique({ 
+          where: { id: serviceId } 
+      });
+      if (!serviceType) throw new NotFoundError('Service type not found');
 
-    // inizializza la coda per questo serviceType
-    await this.ensureQueueLoaded(service.id);
+      // genera il codice del ticket
+      const ticketCode = await this.generateTicketCode(serviceType.tag);
 
-    // calcolo la posizione in coda del nuovo ticket
-    const queue = this.queues.get(service.id) || [];
-    const position = queue.length + 1;
+      // inizializza la coda per questo serviceType
+      await this.ensureQueueLoaded(serviceType.id);
 
-    // aggiorna la coda in-memory
-    queue.push(ticketCode);
-    this.queues.set(service.id, queue);
-    
-    return ({
-      code: ticketCode,
-      positionInQueue: position,
-      queueLength: queue.length
-    });
+      // calcolo la posizione in coda del nuovo ticket
+      const queue = this.queues.get(serviceType.id) || [];
+      const position = queue.length + 1;
+
+      // aggiorna la coda in-memory
+      queue.push(ticketCode);
+      this.queues.set(serviceType.id, queue);
+      
+      return ({
+        code: ticketCode,
+        positionInQueue: position,
+        queueLength: queue.length
+      });
+
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new InternalServerError('Failed to enqueue ticket');
+    } 
   }
 
   /**
@@ -75,27 +89,33 @@ class QueueManager {
    * Questa funzione usa il conteggio dei ticket creati oggi con lo stesso tag.
    */
   private async generateTicketCode(serviceTag: string): Promise<string> {
-    const today = new Date();
-    const dateStr = today.toISOString().split('T')[0].replace(/-/g, ''); //extract only YYYYMMDD
 
-    // conteggio dei ticket di oggi per questo servizio
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    try {
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0].replace(/-/g, ''); //extract only YYYYMMDD
 
-    const todayTicketsCount = await prisma.ticket.count({
-      where: {
-        service: {
-          tag: serviceTag
-        },
-        createdAt: {
-          gte: startOfDay,
-          lte: endOfDay
+      // conteggio dei ticket di oggi per questo servizio
+      const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+      const todayTicketsCount = await prisma.ticket.count({
+        where: {
+          service: {
+            tag: serviceTag
+          },
+          createdAt: {
+            gte: startOfDay,
+            lte: endOfDay
+          }
         }
-      }
-    });
+      });
 
-    const sequenceNumber = (todayTicketsCount + 1).toString().padStart(3, '0');
-    return `${serviceTag}-${dateStr}-${sequenceNumber}`;
+      const sequenceNumber = (todayTicketsCount + 1).toString().padStart(3, '0');
+      return `${serviceTag}-${dateStr}-${sequenceNumber}`;
+      
+    } catch (error) {
+      throw new InternalServerError('Failed to generate ticket code');
+    }
   }
 
 }

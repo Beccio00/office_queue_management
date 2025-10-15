@@ -14,8 +14,7 @@ datasource db {
 model Service {
   id        Int      @id @default(autoincrement()) //global unique identifier for the db
   tag       String   @unique //unique service identifier code
-  name      String   // e.g., "A", "B", "C" TODO: enforce single character and uppercase at app level it is impossible with sqlite
-  avgServiceTime   Int    
+  name      String   // e.g., "A", "B", "C" TODO: enforce single character and uppercase at app level it is impossible with sqlite  
   tickets   Ticket[]               //one service can have many tickets
   counters         CounterService[]
 
@@ -25,7 +24,6 @@ model Service {
 model Counter {
   id          Int              @id @default(autoincrement())
   name        String           @unique 
-  isActive    Boolean          @default(true)
 
   tickets     Ticket[]
   services    CounterService[]
@@ -52,20 +50,14 @@ model Ticket {
   status       TicketStatus @default(WAITING)
   counterId    Int?
   counter      Counter?    @relation(fields: [counterId], references: [id])
+  createdAt    DateTime @default(now())
   calledAt     DateTime?
   servedAt     DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  completedAt  DateTime?
 
   @@map("tickets")   //map to "tickets" table in the db
 }
 
-model Office {
-  id        Int      @id @default(autoincrement())
-  name      String
-  location  String
-  createdAt DateTime @default(now())
-}
 
 enum TicketStatus {
   WAITING

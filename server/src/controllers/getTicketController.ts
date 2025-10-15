@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { TicketService } from '../services/getTicketServices';
 import { CreateTicketRequest } from '../interfaces/getTicket';
+import { queueManager } from '../services/queueManager';
 
-//Singleton pattern for the service
-//to avoid multiple instances and database connections
 const ticketService = new TicketService();
 
 export class TicketController {
@@ -31,7 +30,6 @@ export class TicketController {
 
   async getAvailableServices(req: Request, res: Response, next: NextFunction) {
     try {
-
       const result = await ticketService.getAvailableServices();
       res.json(result.map(service => ({
         id: service.id,
@@ -39,7 +37,21 @@ export class TicketController {
         name: service.name,
         avgServiceTime: service.avgServiceTime
       })));
+    } catch (error) {
+      next(error as any);
+    }
+  }
 
+  async completeTicket(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { ticketCode } = req.params;
+      
+      await queueManager.completeTicket(ticketCode);
+      
+      res.json({ 
+        success: true,
+        message: 'Ticket completed successfully' 
+      });
     } catch (error) {
       next(error as any);
     }

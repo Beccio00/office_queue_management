@@ -1,4 +1,3 @@
-
 export interface CreateTicketRequest {
   serviceId: number;    //customer has only to select the service type
 }

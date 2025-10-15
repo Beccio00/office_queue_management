@@ -18,7 +18,7 @@ jest.mock('../../../src/services/prismaClient', () => ({
       create: jest.fn()
     },
     ticket: {
-      create: jest.fn()
+      findUnique: jest.fn()
     }
   }
 }));
@@ -32,7 +32,7 @@ describe('TicketService Unit Tests', () => {
   let mockEnqueue: jest.MockedFunction<any>;
   let mockServiceFindUnique: jest.MockedFunction<any>;
   let mockServiceFindMany: jest.MockedFunction<any>;
-  let mockTicketCreate: jest.MockedFunction<any>;
+  let mockTicketFindUnique: jest.MockedFunction<any>;
 
   beforeEach(() => {
     // Ensure clean test state by resetting all mock call history and implementations
@@ -45,7 +45,7 @@ describe('TicketService Unit Tests', () => {
     mockEnqueue = mockedQueueManager.enqueue as jest.MockedFunction<any>;
     mockServiceFindUnique = mockedPrisma.service.findUnique as jest.MockedFunction<any>;
     mockServiceFindMany = mockedPrisma.service.findMany as jest.MockedFunction<any>;
-    mockTicketCreate = mockedPrisma.ticket.create as jest.MockedFunction<any>;
+    mockTicketFindUnique = mockedPrisma.ticket.findUnique as jest.MockedFunction<any>;
   });
 
   afterEach(() => {
@@ -79,7 +79,7 @@ describe('TicketService Unit Tests', () => {
         // Arrange - Configure all mocks to simulate successful ticket creation flow
         mockEnqueue.mockResolvedValue(mockQueueResponse);
         mockServiceFindUnique.mockResolvedValue(mockService);
-        mockTicketCreate.mockResolvedValue(mockTicket);
+        mockTicketFindUnique.mockResolvedValue(mockTicket);
 
         // Act
         const result = await ticketService.createTicket(mockCreateTicketRequest);
@@ -105,13 +105,8 @@ describe('TicketService Unit Tests', () => {
         expect(mockEnqueue).toHaveBeenCalledWith(mockServiceId);
         expect(mockServiceFindUnique).toHaveBeenCalledTimes(1);
         expect(mockServiceFindUnique).toHaveBeenCalledWith({ where: { id: mockServiceId } });
-        expect(mockTicketCreate).toHaveBeenCalledTimes(1);
-        expect(mockTicketCreate).toHaveBeenCalledWith({
-          data: {
-            code: mockQueueResponse.code,
-            serviceId: mockService.id
-          }
-        });
+        expect(mockTicketFindUnique).toHaveBeenCalledTimes(1);
+        expect(mockTicketFindUnique).toHaveBeenCalledWith({ where: { code: mockQueueResponse.code } });
       });
 
       it('should handle different service types correctly', async () => {
@@ -122,7 +117,7 @@ describe('TicketService Unit Tests', () => {
 
         mockEnqueue.mockResolvedValue(shippingQueueResponse);
         mockServiceFindUnique.mockResolvedValue(shippingService);
-        mockTicketCreate.mockResolvedValue(shippingTicket);
+        mockTicketFindUnique.mockResolvedValue(shippingTicket);
 
         // Act
         const result = await ticketService.createTicket({ serviceId: 2 });
@@ -183,7 +178,7 @@ describe('TicketService Unit Tests', () => {
 
         expect(mockEnqueue).toHaveBeenCalledWith(mockServiceId);
         expect(mockServiceFindUnique).toHaveBeenCalledWith({ where: { id: mockServiceId } });
-        expect(mockTicketCreate).not.toHaveBeenCalled();
+        expect(mockTicketFindUnique).not.toHaveBeenCalled();
       });
     });
 
@@ -232,10 +227,8 @@ describe('TicketService Unit Tests', () => {
     describe('Database Constraint Errors', () => {
       // Test suite for Prisma-specific error handling and constraint violations
       it('should throw ConflictError on unique constraint violation (P2002)', async () => {
-        // Arrange - Simulate database unique constraint failure (duplicate ticket code)
-        mockEnqueue.mockResolvedValue(mockQueueResponse);
-        mockServiceFindUnique.mockResolvedValue(mockService);
-        mockTicketCreate.mockRejectedValue({ code: 'P2002', message: 'Unique constraint failed' });
+        // Arrange - Simulate database unique constraint failure via queueManager
+        mockEnqueue.mockRejectedValue({ code: 'P2002', message: 'Unique constraint failed' });
 
         // Act & Assert
         await expect(ticketService.createTicket(mockCreateTicketRequest))
@@ -248,19 +241,12 @@ describe('TicketService Unit Tests', () => {
           expect(error.details).toBe('Unique constraint violation');
         }
 
-        expect(mockTicketCreate).toHaveBeenCalledWith({
-          data: {
-            code: mockQueueResponse.code,
-            serviceId: mockService.id
-          }
-        });
+        expect(mockEnqueue).toHaveBeenCalledWith(mockServiceId);
       });
 
       it('should handle other Prisma constraint errors as InternalServerError', async () => {
         // Arrange
-        mockEnqueue.mockResolvedValue(mockQueueResponse);
-        mockServiceFindUnique.mockResolvedValue(mockService);
-        mockTicketCreate.mockRejectedValue({ code: 'P2003', message: 'Foreign key constraint failed' });
+        mockEnqueue.mockRejectedValue({ code: 'P2003', message: 'Foreign key constraint failed' });
 
         // Act & Assert
         await expect(ticketService.createTicket(mockCreateTicketRequest))
@@ -290,9 +276,7 @@ describe('TicketService Unit Tests', () => {
 
       it('should wrap generic errors in InternalServerError', async () => {
         // Arrange - Test error standardization for unexpected system failures
-        mockEnqueue.mockResolvedValue(mockQueueResponse);
-        mockServiceFindUnique.mockResolvedValue(mockService);
-        mockTicketCreate.mockRejectedValue(new Error('Generic database error'));
+        mockEnqueue.mockRejectedValue(new Error('Generic database error'));
 
         // Act & Assert
         await expect(ticketService.createTicket(mockCreateTicketRequest))

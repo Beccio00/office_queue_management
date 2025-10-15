@@ -13,7 +13,8 @@ jest.mock('../../../src/services/prismaClient', () => ({
     },
     ticket: {
       findMany: jest.fn(),
-      count: jest.fn()
+      count: jest.fn(),
+      create: jest.fn()
     }
   }
 }));
@@ -25,6 +26,7 @@ describe('QueueManager Unit Tests', () => {
   let mockServiceFindUnique: jest.MockedFunction<any>;
   let mockTicketFindMany: jest.MockedFunction<any>;
   let mockTicketCount: jest.MockedFunction<any>;
+  let mockTicketCreate: jest.MockedFunction<any>;
 
   beforeEach(() => {
     // Ensure clean test state by resetting all mock interactions
@@ -34,6 +36,7 @@ describe('QueueManager Unit Tests', () => {
     mockServiceFindUnique = mockedPrisma.service.findUnique as jest.MockedFunction<any>;
     mockTicketFindMany = mockedPrisma.ticket.findMany as jest.MockedFunction<any>;
     mockTicketCount = mockedPrisma.ticket.count as jest.MockedFunction<any>;
+    mockTicketCreate = mockedPrisma.ticket.create as jest.MockedFunction<any>;
 
     // Reset singleton state - critical for testing stateful queue manager
     // Directly manipulate internal Map to ensure test isolation
@@ -74,6 +77,7 @@ describe('QueueManager Unit Tests', () => {
         mockServiceFindUnique.mockResolvedValue(mockService);
         mockTicketFindMany.mockResolvedValue([]); // No existing waiting tickets
         mockTicketCount.mockResolvedValue(0); // No tickets today
+        mockTicketCreate.mockResolvedValue({ code: 'D-001' }); // Mock successful ticket creation
 
         // Act
         const result = await queueManager.enqueue(mockServiceId);
@@ -101,6 +105,7 @@ describe('QueueManager Unit Tests', () => {
         mockServiceFindUnique.mockResolvedValue(mockService);
         mockTicketFindMany.mockResolvedValue(existingTickets);
         mockTicketCount.mockResolvedValue(2); // 2 tickets already today
+        mockTicketCreate.mockResolvedValue({ code: 'D-003' }); // Mock successful ticket creation
 
         // Act
         const result = await queueManager.enqueue(mockServiceId);

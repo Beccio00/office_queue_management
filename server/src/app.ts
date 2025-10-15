@@ -1,11 +1,14 @@
+//app.ts is used to separate the app export from the listen() in order to do integration testing
+
 import express, { Express, Request, Response } from "express";
 import ticketRoutes from './routes/getTicketRoutes';
+import queueRoutes from './routes/queueRoutes';
 import serviceRoutes from './routes/serviceRoutes';
-import { errorMiddleware } from "./middleware/errorMiddleware";
+import displayRoutes from './routes/displayRoutes';
 
-import app from './app';
 
-const port = 3000;
+const app = express();
+app.use(express.json());
 
 // Middleware
 app.use(express.json());
@@ -31,19 +34,28 @@ app.get("/", (req: Request, res: Response) => {
     version: "1.0.0",
     endpoints: {
       tickets: "/api/tickets",
-      services: "/api/services"
+      services: "/api/services",
+      queue: "/api/queue"
     }
   });
 });
 
 // API routes
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/queue', queueRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/display', displayRoutes);
 
 // Error handling middleware
-app.use(errorMiddleware);
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-  console.log(`API available at http://localhost:${port}/api`);
+app.use((err: any, req: Request, res: Response, next: any) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    success: false,
+    error: err.message || 'Internal server error'
+  });
 });
+
+
+app.use("/api/tickets", ticketRoutes);
+
+export default app;

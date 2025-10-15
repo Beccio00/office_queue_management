@@ -3,5 +3,5 @@ export type Service = {
     id: number;
     name: string;
     tag: string;
-    serviceTime: number; // average time in minutes
+    avgServiceTime: number; // average time in minutes
 };

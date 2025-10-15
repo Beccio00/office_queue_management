@@ -4,20 +4,19 @@ import { NotFoundError } from '../interfaces/errors/NotFoundError';
 import { InternalServerError } from '../interfaces/errors/InternalServerError';
 import { AppError } from '../interfaces/errors/AppError';
 
-/*  Coda divisa per servizi, implementata come una mappa in-memory che associa a ogni 
-`serviceType` un array di code di ticket  */
-
 class QueueManager {
 
   private static instance: QueueManager | null = null;
   private queues: Map<number, string[]> = new Map();
+  private counterServicesCache: Map<number, Array<{
+    serviceId: number;
+    avgServiceTime: number;
+  }>> = new Map();
 
   private constructor() {}
 
-  /*    Inizializza la coda per un certo servizio prendendo dal DB gli id dei ticket WAITING di quel servizio    */
   private async ensureQueueLoaded(serviceId: number) {
     try {
-
       if (this.queues.has(serviceId)) return;
       const waitingTickets: Array<{ code: string }> = await prisma.ticket.findMany({
         where: {
@@ -32,13 +31,161 @@ class QueueManager {
         }
       });
       this.queues.set(serviceId, waitingTickets.map(t => t.code));
-
     } catch (error) {
       throw new InternalServerError('Failed to load waiting tickets');
     }
-}
+  }
 
-  /*    Restituisce l'istanza del singleton    */
+  private async loadCounterServices(counterId: number) {
+    if (this.counterServicesCache.has(counterId)) {
+      return this.counterServicesCache.get(counterId)!;
+    }
+
+    const counterServices = await prisma.counterService.findMany({
+      where: { counterId },
+      include: { service: true }
+    });
+
+    const services = counterServices.map(cs => ({
+      serviceId: cs.serviceId,
+      avgServiceTime: cs.service.avgServiceTime
+    }));
+
+    this.counterServicesCache.set(counterId, services);
+    return services;
+  }
+
+  private async ensureCounterQueuesLoaded(counterId: number) {
+    const services = await this.loadCounterServices(counterId);
+    for (const service of services) {
+      await this.ensureQueueLoaded(service.serviceId);
+    }
+  }
+
+  async getNextTicketForCounter(counterId: number): Promise<string | null> {
+    try {
+      await this.ensureCounterQueuesLoaded(counterId);
+      
+      const services = await this.loadCounterServices(counterId);
+      
+      if (services.length === 0) {
+        throw new NotFoundError('Counter has no assigned services');
+      }
+      
+      const queueInfo = services.map(s => ({
+        serviceId: s.serviceId,
+        avgServiceTime: s.avgServiceTime,
+        length: (this.queues.get(s.serviceId) || []).length
+      }));
+      
+      const nonEmpty = queueInfo.filter(q => q.length > 0);
+      
+      if (nonEmpty.length === 0) {
+        return null;
+      }
+      
+      const selected = nonEmpty.sort((a, b) => {
+        if (b.length !== a.length) {
+          return b.length - a.length;
+        }
+        return a.avgServiceTime - b.avgServiceTime;
+      })[0];
+      
+      const queue = this.queues.get(selected.serviceId)!;
+      const ticketCode = queue.shift()!;
+      
+      await prisma.ticket.update({
+        where: { code: ticketCode },
+        data: {
+          status: 'CALLED',
+          counterId: counterId,
+          calledAt: new Date()
+        }
+      });
+      
+      return ticketCode;
+      
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new InternalServerError('Failed to get next ticket for counter');
+    }
+  }
+
+  async getTicketByCode(ticketCode: string) {
+    try {
+      const ticket = await prisma.ticket.findUnique({
+        where: { code: ticketCode },
+        include: { service: true }
+      });
+
+      if (!ticket) {
+        throw new NotFoundError('Ticket not found');
+      }
+
+      return ticket;
+      
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new InternalServerError('Failed to get ticket');
+    }
+  }
+
+  async completeTicket(ticketCode: string): Promise<void> {
+    try {
+      const ticket = await prisma.ticket.findUnique({
+        where: { code: ticketCode }
+      });
+
+      if (!ticket) {
+        throw new NotFoundError('Ticket not found');
+      }
+
+      await prisma.ticket.update({
+        where: { code: ticketCode },
+        data: {
+          status: 'SERVED',
+          servedAt: new Date()
+        }
+      });
+      
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new InternalServerError('Failed to complete ticket');
+    }
+  }
+
+  async getQueueStatus(): Promise<Array<{
+    serviceId: number;
+    serviceTag: string;
+    serviceName: string;
+    queueLength: number;
+  }>> {
+    try {
+      const services = await prisma.service.findMany({
+        orderBy: { id: 'asc' }
+      });
+
+      const status = await Promise.all(
+        services.map(async (service) => {
+          await this.ensureQueueLoaded(service.id);
+          const queue = this.queues.get(service.id) || [];
+          
+          return {
+            serviceId: service.id,
+            serviceTag: service.tag,
+            serviceName: service.name,
+            queueLength: queue.length
+          };
+        })
+      );
+
+      return status;
+      
+    } catch (error) {
+      throw new InternalServerError('Failed to get queue status');
+    }
+  }
+
   static getInstance(): QueueManager {
     if (!QueueManager.instance) {
       QueueManager.instance = new QueueManager();
@@ -46,28 +193,28 @@ class QueueManager {
     return QueueManager.instance;
   }
 
-  /*    Inserisce un nuovo ticket nella coda per il suo tipo di servizio    */
   async enqueue(serviceId: number): Promise<EnqueueResult> {
-
     try {
-
-      // verifica che il tipo di servizio esista
       const serviceType = await prisma.service.findUnique({ 
           where: { id: serviceId } 
       });
       if (!serviceType) throw new NotFoundError('Service type not found');
 
-      // genera il codice del ticket
       const ticketCode = await this.generateTicketCode(serviceType.tag);
 
-      // inizializza la coda per questo serviceType
+      await prisma.ticket.create({
+        data: {
+          code: ticketCode,
+          serviceId: serviceId,
+          status: 'WAITING'
+        }
+      });
+
       await this.ensureQueueLoaded(serviceType.id);
 
-      // calcolo la posizione in coda del nuovo ticket
       const queue = this.queues.get(serviceType.id) || [];
       const position = queue.length + 1;
 
-      // aggiorna la coda in-memory
       queue.push(ticketCode);
       this.queues.set(serviceType.id, queue);
       
@@ -83,17 +230,10 @@ class QueueManager {
     } 
   }
 
-  /**
-   * Genera il codice del ticket secondo il formato:
-   * TAG-YYYYMMDD-sequenza (sequenza giornaliera padded a 3 cifre)
-   * Questa funzione usa il conteggio dei ticket creati oggi con lo stesso tag.
-   */
   private async generateTicketCode(serviceTag: string): Promise<string> {
-
     try {
       const today = new Date();
 
-      // conteggio dei ticket di oggi per questo servizio
       const startOfDay = new Date(today.setHours(0, 0, 0, 0));
       const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
@@ -119,5 +259,4 @@ class QueueManager {
 
 }
 
-// esportiamo l'istanza singleton pronta all'uso
 export const queueManager = QueueManager.getInstance();

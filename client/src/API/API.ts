@@ -30,6 +30,17 @@ export const API = {
     return response.json();
   },
 
+  getCounterServices: async (counterId: number) => {
+    const response = await fetch(`${SERVER_URL}/api/counter/${counterId}/services`);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch counter services');
+    }
+
+    return response.json();
+  },
+
   // Officer APIs
   callNextCustomer: async (counterId: number) => {
     const response = await fetch(`${SERVER_URL}/api/queue/next`, {

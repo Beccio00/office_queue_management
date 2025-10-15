@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Alert, Form, Spinner } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import API from '../../API/API';
@@ -10,9 +9,7 @@ import type { Service, Ticket } from '../../../../shared/types';
  * Officer page component for queue management system
  * Allows officers to call next customer from their counter
  */
-const Officer = () => {
-  const navigate = useNavigate();
-  
+const Officer = () => {  
   // State management
   const [counterId, setCounterId] = useState<number | null>(null);
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
@@ -31,16 +28,13 @@ const Officer = () => {
 
     const fetchCounterData = async () => {
       try {
-        // Fetch queue status
         const response = await fetch(`http://localhost:3000/api/queue/status`);
         if (response.ok) {
           const status = await response.json();
           setQueueStatus(status.data || []);
         }
 
-        // TODO: Fetch counter-specific services when API is available
-        // For now, we fetch all services
-        const services = await API.getAvailableServices();
+        const services = await API.getCounterServices(counterId);
         setCounterServices(services);
       } catch (err) {
         console.error('Error fetching counter data:', err);
@@ -123,7 +117,6 @@ const Officer = () => {
         isHomePage={false}
         isCustomerPage={false}
         isOfficerPage={true}
-        onBack={() => navigate(-1)}
       />
 
       <main className="flex-grow-1">

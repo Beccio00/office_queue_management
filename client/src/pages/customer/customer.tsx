@@ -40,26 +40,17 @@ const Customer = () => {
     fetchServices();
   }, []);
 
-  /**
-   * Maps service tags to their corresponding icons
-   */
   const serviceIcons = {
     D: 'fa-money-bill-wave',
     S: 'fa-box',
     A: 'fa-user-cog'
   } as const;
 
-  /**
-   * Handles service selection
-   */
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
     setError(null);
   };
 
-  /**
-   * Requests a new ticket for the selected service
-   */
   const handleGetTicket = async () => {
     if (!selectedService) return;
 
@@ -83,9 +74,6 @@ const Customer = () => {
     }
   };
 
-  /**
-   * Resets the form to request another ticket
-   */
   const handleReset = () => {
     setTicket(null);
     setSelectedService(null);
@@ -100,7 +88,6 @@ const Customer = () => {
       <Header 
         isHomePage={false}
         isCustomerPage={true}
-        onBack={() => navigate(-1)}
       />
 
       {/* Main content */}
@@ -210,7 +197,7 @@ const Customer = () => {
                       </div>
                       <Card.Title className="h4 mb-3 text-center">{service.name}</Card.Title>
                       <Card.Text className="text-center text-muted">
-                        ~{service.serviceTime} minutes
+                        ~{service.avgServiceTime} minutes
                       </Card.Text>
                     </Card.Body>
                   </Card>

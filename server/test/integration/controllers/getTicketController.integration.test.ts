@@ -6,23 +6,81 @@ describe("TicketController integration", () => {
     // ensure test DB is set by test runner (DATABASE_URL)
   });
 
-  it("creates a ticket using service tag", async () => {
+  it("creates a ticket using serviceId (original test)", async () => {
     const res = await request(app)
       .post("/api/tickets")
-      .send({ serviceType: "D" })
+      .send({ serviceId: 1 }) // seed creates service with id=1 (tag D)
       .set("Accept", "application/json");
 
-    expect([201, 400]).toContain(res.status); // allow 400 if seed missing
-    if (res.status === 201) {
-      expect(res.body).toHaveProperty("id");
-      expect(res.body).toHaveProperty("serviceType", "D");
-    }
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty("id");
+    expect(res.body).toHaveProperty("serviceType", "D");
+    expect(res.body).toHaveProperty("status", "WAITING");
+    expect(res.body).toHaveProperty("queuePosition");
+    expect(typeof res.body.queuePosition).toBe("number");
   });
 
-  it("returns 400 when no serviceType or serviceId provided", async () => {
+  it("returns 404 when no serviceId provided", async () => {
     const res = await request(app).post("/api/tickets").send({});
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(404);
+  });
+
+  it("creates a ticket using serviceId", async () => {
+    const res = await request(app)
+      .post("/api/tickets")
+      .send({ serviceId: 1 }) // seed creates service with id=1 (tag D)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty("id");
+    expect(res.body).toHaveProperty("serviceType");
+    expect(res.body).toHaveProperty("status", "WAITING");
+    expect(res.body).toHaveProperty("queuePosition");
+    expect(typeof res.body.queuePosition).toBe("number");
+  });
+
+  it("returns 404 when serviceId does not exist", async () => {
+    const res = await request(app)
+      .post("/api/tickets")
+      .send({ serviceId: 9999 })
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(404);
+  });
+
+  it("generates ticket code in correct format (TAG-###)", async () => {
+    const res = await request(app)
+      .post("/api/tickets")
+      .send({ serviceId: 2 }) // seed creates service with id=2 (tag S)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(201);
+    // Format is TAG-### (e.g., S-001)
+    expect(res.body.id).toMatch(/^[A-Z]-\d{3}$/);
+  });
+
+  describe("GET /api/services", () => {
+    it("returns list of available services", async () => {
+      const res = await request(app).get("/api/services");
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThan(0);
+
+      // verify structure of first service
+      const service = res.body[0];
+      expect(service).toHaveProperty("id");
+      expect(service).toHaveProperty("tag");
+      expect(service).toHaveProperty("name");
+    });
+
+    it("returns services sorted by tag", async () => {
+      const res = await request(app).get("/api/services");
+
+      expect(res.status).toBe(200);
+      const tags = res.body.map((s: any) => s.tag);
+      const sortedTags = [...tags].sort();
+      expect(tags).toEqual(sortedTags);
+    });
   });
 });
-
-//TODO: add more tests?

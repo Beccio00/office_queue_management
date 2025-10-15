@@ -1,28 +1,12 @@
 import { Container, Button, Row, Col } from 'react-bootstrap';
 
-/**
- * Props for the Header component
- */
 interface HeaderProps {
-  /** Flag indicating if current page is home page */
   isHomePage: boolean;
-  /** Flag indicating if current page is customer page */
   isCustomerPage: boolean;
-  /** Flag indicating if current page is officer page */
   isOfficerPage?: boolean;
-  /** Callback function for back button click */
-  onBack: () => void;
 }
 
-/**
- * Header component that displays the navigation bar
- * Shows different content based on current page and provides navigation
- */
-const Header = ({ isHomePage, isCustomerPage, isOfficerPage, onBack }: HeaderProps) => {
-  /**
-   * Renders the header content based on current page
-   * Shows appropriate icon + title for each page type
-   */
+const Header = ({ isHomePage, isCustomerPage, isOfficerPage}: HeaderProps) => {
   const getHeaderContent = () => {
     if (isCustomerPage) {
       return (
@@ -54,16 +38,6 @@ const Header = ({ isHomePage, isCustomerPage, isOfficerPage, onBack }: HeaderPro
             <div className="d-flex align-items-center">
               {getHeaderContent()}
             </div>
-            {/* Back button - hidden on home page */}
-            {!isHomePage && (
-              <Button
-                variant="outline-light"
-                className="shadow-sm"
-                onClick={onBack}
-              >
-                Back &larr;
-              </Button>
-            )}
           </Col>
         </Row>
       </Container>

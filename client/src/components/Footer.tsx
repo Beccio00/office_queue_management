@@ -1,9 +1,5 @@
 import { Container } from 'react-bootstrap';
 
-/**
- * Footer component that displays the application footer
- * Shows copyright information with consistent styling
- */
 const Footer = () => {
   return (
     <footer 
@@ -13,7 +9,7 @@ const Footer = () => {
       }}
     >
       <Container>
-        <small>Office Queue Management System © 2025</small>
+        <small>Office Queue Management System</small>
       </Container>
     </footer>
   );

@@ -39,7 +39,6 @@ const Home = () => {
       <Header 
         isHomePage={true}
         isCustomerPage={false}
-        onBack={() => navigate(-1)}
       />
       <main className="flex-grow-1">
         <Container fluid className="py-5">

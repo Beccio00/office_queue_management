@@ -10,9 +10,7 @@ import type { Service, Ticket } from '../../../../shared/types';
  * Officer page component for queue management system
  * Allows officers to call next customer from their counter
  */
-const Officer = () => {
-  const navigate = useNavigate();
-  
+const Officer = () => {  
   // State management
   const [counterId, setCounterId] = useState<number | null>(null);
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
@@ -123,7 +121,6 @@ const Officer = () => {
         isHomePage={false}
         isCustomerPage={false}
         isOfficerPage={true}
-        onBack={() => navigate(-1)}
       />
 
       <main className="flex-grow-1">

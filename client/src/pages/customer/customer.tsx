@@ -88,7 +88,6 @@ const Customer = () => {
       <Header 
         isHomePage={false}
         isCustomerPage={true}
-        onBack={() => navigate(-1)}
       />
 
       {/* Main content */}

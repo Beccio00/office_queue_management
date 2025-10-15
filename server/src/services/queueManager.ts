@@ -46,7 +46,7 @@ class QueueManager {
       include: { service: true }
     });
 
-    const services = counterServices.map(cs => ({
+    const services = counterServices.map((cs: any) => ({
       serviceId: cs.serviceId,
       avgServiceTime: cs.service.avgServiceTime
     }));
@@ -72,19 +72,19 @@ class QueueManager {
         throw new NotFoundError('Counter has no assigned services');
       }
       
-      const queueInfo = services.map(s => ({
+      const queueInfo = services.map((s: any) => ({
         serviceId: s.serviceId,
         avgServiceTime: s.avgServiceTime,
         length: (this.queues.get(s.serviceId) || []).length
       }));
       
-      const nonEmpty = queueInfo.filter(q => q.length > 0);
+      const nonEmpty = queueInfo.filter((q: any) => q.length > 0);
       
       if (nonEmpty.length === 0) {
         return null;
       }
       
-      const selected = nonEmpty.sort((a, b) => {
+      const selected = nonEmpty.sort((a:any, b:any) => {
         if (b.length !== a.length) {
           return b.length - a.length;
         }
@@ -166,7 +166,7 @@ class QueueManager {
       });
 
       const status = await Promise.all(
-        services.map(async (service) => {
+        services.map(async (service: any) => {
           await this.ensureQueueLoaded(service.id);
           const queue = this.queues.get(service.id) || [];
           

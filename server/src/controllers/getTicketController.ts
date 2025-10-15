@@ -23,6 +23,8 @@ export class TicketController {
         queuePosition: result.ticket.positionInQueue
       });
 
+      
+
     } catch (error) {
       next(error as any);
     }

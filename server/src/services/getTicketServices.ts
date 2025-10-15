@@ -8,7 +8,6 @@ import { AppError } from '../interfaces/errors/AppError';
 
 export class TicketService {
 
-  // new ticket creation for a specific service
   async createTicket(request: CreateTicketRequest): Promise<CreateTicketResponse> {
     const serviceId = request.serviceId;
 
@@ -18,17 +17,14 @@ export class TicketService {
       const response = await queueManager.enqueue(serviceId);
       if (!response) throw new InternalServerError('Failed to enqueue ticket');
 
-      // fetch serviceType info for the response
       const serviceType = await prisma.service.findUnique({ where: { id: serviceId } });
       if (!serviceType) throw new NotFoundError('Service type not found');
 
-      //salva su prisma il ticket
-      const ticket = await prisma.ticket.create({
-        data: {
-          code: response.code,
-          serviceId: serviceType.id
-        }
+      const ticket = await prisma.ticket.findUnique({
+        where: { code: response.code }
       });
+
+      if (!ticket) throw new InternalServerError('Ticket created but not found');
 
       return ({
         ticket: {
@@ -45,13 +41,10 @@ export class TicketService {
         }
       });
     } catch (err: any) {
-      // se c'è una violazione del codice ticket univoco, lancia un ConflictError
       if (err?.code === 'P2002') {
         throw new ConflictError('Unique constraint violation');
       }
-      // rilancia AppError già wrappati
       if (err instanceof AppError) throw err;
-      // altrimenti wrap generico in un AppError
       throw new InternalServerError('Failed to create ticket');
     }
   }

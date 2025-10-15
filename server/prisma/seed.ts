@@ -46,22 +46,22 @@ async function main() {
   const counter1 = await prisma.counter.create({
     data: {
       id: 1,
-      name: "Counter 1",
-    },
+      name: 'Counter 1'
+    }
   });
 
   const counter2 = await prisma.counter.create({
     data: {
       id: 2,
-      name: "Counter 2",
-    },
+      name: 'Counter 2'
+    }
   });
 
   const counter3 = await prisma.counter.create({
     data: {
       id: 3,
-      name: "Counter 3",
-    },
+      name: 'Counter 3'
+    }
   });
 
   console.log("Counters created:", {

@@ -6,4 +6,6 @@ module.exports = {
     "^.+\\.ts$": ["ts-jest", { tsconfig: "tsconfig.json" }],
   },
   globalSetup: "<rootDir>/test/globalSetup.ts",
+  globalTeardown: "<rootDir>/test/globalTeardown.ts",
+  setupFilesAfterEnv: ["<rootDir>/test/setupAfterEnv.ts"],
 };

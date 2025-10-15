@@ -5,7 +5,8 @@ import queueRoutes from './routes/queueRoutes';
 import counterRoutes from './routes/counterRoutes';
 import { errorMiddleware } from "./middleware/errorMiddleware";
 
-const app: Express = express();
+import app from './app';
+
 const port = 3000;
 
 // Middleware

@@ -28,7 +28,7 @@ router.get('/:counterId/services', async (req: Request, res: Response, next: Nex
       }
     });
 
-    const services = counterServices.map(cs => ({
+    const services = counterServices.map((cs:any) => ({
       id: cs.service.id,
       tag: cs.service.tag,
       name: cs.service.name,

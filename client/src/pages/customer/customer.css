@@ -1,0 +1,24 @@
+.service-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.service-card:hover i {
+  transform: scale(1.1);
+}
+
+.service-card i {
+  transition: transform 0.2s ease;
+}
+
+.service-card.selected {
+  border-color: #3498db !important;
+}
+
+.service-card.selected i {
+  color: #3498db !important;
+}

@@ -1,9 +1,12 @@
 node_modules
 # Keep environment variables out of version control
-.env
+
 
 /src/generated/prisma
 
 /generated/prisma
 
 /generated/prisma
+
+# Ignore test database created by Jest globalSetup
+test/test.db

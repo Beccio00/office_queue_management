@@ -10,18 +10,60 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+ 
+model Service {
+  id                Int      @id @default(autoincrement()) //global unique identifier for the db
+  tag               String   @unique // e.g., "A", "B", "C" TODO: enforce single character and uppercase at app level it is impossible with sqlite 
+  name              String
+  avgServiceTime    Int         
+  
+  tickets           Ticket[]               //one service can have many tickets
+  counters          CounterService[]
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
+  @@map("services")    //map to "services" table in the db
 }
 
-model Office {
-  id        Int      @id @default(autoincrement())
-  name      String
-  location  String
-  createdAt DateTime @default(now())
+model Counter {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique 
+
+  tickets     Ticket[]
+  services    CounterService[]
+
+  @@map("counters")
+}
+
+model CounterService {
+  counterId   Int
+  serviceId   Int
+
+  counter     Counter  @relation(fields: [counterId], references: [id])
+  service     Service  @relation(fields: [serviceId], references: [id])
+
+  @@id([counterId, serviceId])
+  @@map("counter_services")
+}
+
+model Ticket {
+  id           Int      @id @default(autoincrement())  //global unique identifier for the db
+  code         String   @unique //unique ticket identifier code(visible to the user)
+  service      Service  @relation(fields: [serviceId], references: [id])
+  serviceId    Int
+  status       TicketStatus @default(WAITING)
+  counterId    Int?
+  counter      Counter?    @relation(fields: [counterId], references: [id])
+  createdAt    DateTime @default(now())
+  calledAt     DateTime?
+  servedAt     DateTime?
+  completedAt  DateTime?
+
+  @@map("tickets")   //map to "tickets" table in the db
+}
+
+
+enum TicketStatus {
+  WAITING
+  CALLED
+  SERVED
+  COMPLETED
 }

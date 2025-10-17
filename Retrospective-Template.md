@@ -76,17 +76,22 @@ sections:
 ## ASSESSMENT
 
 - What did go wrong in the sprint?
+    - The assignment of the tasks of each story did not have a rigid logic behind and was too random. There were mmoments in which two or three members of the group were working hard and the other were doing nothing because they had to wait for the prevoius work to be finished.
 
 - What caused your errors in estimation (if any)?
+    - The major estimation errors are in the "Code Review" tasks. This was caused by a miscommunication between the "back-end developpers" and the "front-end developpers".
 
 - What lessons did you learn (both positive and negative) in this sprint?
+    - We understood that the sprint meeting must not be underestimated.
 
-- Which improvement goals set in the previous retrospective were you able to achieve? 
+- Which improvement goals set in the previous retrospective were you able to achieve? IDK
   
 - Which ones you were not able to achieve? Why?
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
 
   > Propose one or two
+  - better team coordination
+  - better team communication (info must be more precise and complete)
 
 - One thing you are proud of as a Team!!

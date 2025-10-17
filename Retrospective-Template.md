@@ -55,17 +55,21 @@ sections:
 ## QUALITY MEASURES 
 
 - Unit Testing:
-  - Total hours estimated
-  - Total hours spent
+  - Total hours estimated: 4h (stories 1 & 2), 2h (story 3, not done)
+  - Total hours spent: 3h 56m (stories 1 & 2), 0h (story 3, not done)
   - Nr of automated unit test cases 
   - Coverage
 - E2E testing:
-  - Total hours estimated
-  - Total hours spent
-  - Nr of test cases
+  - Total hours estimated: 0h
+  - Total hours spent: 0h
+  - Nr of test cases: 0
+- Integration testing:
+  - Total hours estimated: 4h (stories 1 & 2), 2h (story 3, not done) 
+  - Total hours spent: 4h 30m (stories 1 & 2), 0h (story 3, not done)
+  - Nr of test cases: 
 - Code review 
-  - Total hours estimated 
-  - Total hours spent
+  - Total hours estimated: 7h (stories 1 & 2), 2h (story 3, not done) 
+  - Total hours spent: 11h 40m (stories 1 & 2), 0h (story 3, not done)
   
 
 

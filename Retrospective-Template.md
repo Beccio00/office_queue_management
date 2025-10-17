@@ -80,9 +80,11 @@ sections:
 - What lessons did you learn (both positive and negative) in this sprint?
     - We understood that the sprint meeting must not be underestimated.
 
-- Which improvement goals set in the previous retrospective were you able to achieve? IDK
+- Which improvement goals set in the previous retrospective were you able to achieve? 
+    - This is the first retrospective
   
 - Which ones you were not able to achieve? Why?
+    - This is the first retospective
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
 
@@ -91,3 +93,4 @@ sections:
   - better team communication (info must be more precise and complete)
 
 - One thing you are proud of as a Team!!
+  - We never yelled at each other even when we had some problems with the projects.

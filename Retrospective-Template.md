@@ -57,7 +57,7 @@ sections:
 - Unit Testing:
   - Total hours estimated: 4h (stories 1 & 2), 2h (story 3, not done)
   - Total hours spent: 3h 56m (stories 1 & 2), 0h (story 3, not done)
-  - Nr of automated unit test cases 
+  - Nr of automated unit test cases : 212
   - Coverage
 - E2E testing:
   - Total hours estimated: 0h
@@ -66,7 +66,7 @@ sections:
 - Integration testing:
   - Total hours estimated: 4h (stories 1 & 2), 2h (story 3, not done) 
   - Total hours spent: 4h 30m (stories 1 & 2), 0h (story 3, not done)
-  - Nr of test cases: 
+  - Nr of test cases: 26
 - Code review 
   - Total hours estimated: 7h (stories 1 & 2), 2h (story 3, not done) 
   - Total hours spent: 11h 40m (stories 1 & 2), 0h (story 3, not done)

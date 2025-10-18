@@ -17,7 +17,7 @@ sections:
 - Total points committed vs. done 
     - 4 points committed --- 3 points done
 - Nr of hours planned vs. spent (as a team)
-    - time estimated: 56h 55m --- time spent: 61h 51m
+    - time estimated: 55h25m --- time spent: 60h56m
 
 **Remember**a story is done ONLY if it fits the Definition of Done:
  
@@ -30,10 +30,13 @@ sections:
 
 ### Detailed statistics
 
-| Story  | # Tasks | Points | Hours est. | Hours actual |
-|--------|---------|--------|------------|--------------|
-| _Uncategorized_   |         |       |            |              |
-| n      |         |        |            |              |  
+| Story | # Tasks | Points | Hours est. | Hours actual |
+|-------|--------:|-------:|-----------:|-------------:|
+| _Uncategorized_ | 11 | - | 29h45m | 29h45m |
+| Get ticket | 8 | 2 | 13h05m | 17h08m |
+| Next customer | 7 | 1 | 12h35m | 14h03m |
+| **Total** | 26 | 3 | **55h25m** | **60h56m** |
+
 
 > story `Uncategorized` is for technical tasks, leave out story points (not applicable in this case)
 
@@ -41,16 +44,20 @@ sections:
 
 |            | Mean | StDev |
 |------------|------|-------|
-| Estimation |      |       | 
-| Actual     |      |       |
+| Estimation | 2h08m | 2h13m | 
+| Actual     | 2h20m30s | 2h22m |
 
 - Total estimation error ratio: sum of total hours spent / sum of total hours effort - 1
 
     $$\frac{\sum_i spent_{task_i}}{\sum_i estimation_{task_i}} - 1$$
+  
+  **Total Error Ration = 0,0996**
     
 - Absolute relative task estimation error: sum( abs( spent-task-i / estimation-task-i - 1))/n
 
-    $$\frac{1}{n}\sum_i^n \left| \frac{spent_{task_i}}{estimation_task_i}-1 \right| $$
+    $$\frac{1}{n}\sum_i^n \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 \right| $$
+
+  **Absolute Relative Error = 0,1583**
   
 ## QUALITY MEASURES 
 

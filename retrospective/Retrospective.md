@@ -83,25 +83,25 @@ sections:
 ## ASSESSMENT
 
 - What did go wrong in the sprint?
-    - The assignment of the tasks of each story did not have a rigid logic behind and was too random. There were mmoments in which two or three members of the group were working hard and the other were doing nothing because they had to wait for the prevoius work to be finished.
+    - The assignment of tasks for each story lacked a clear logic and was rather arbitrary. At times, two or three group members were working intensively while the others were stuck, having to wait for the previous tasks to be completed.
 
 - What caused your errors in estimation (if any)?
-    - The major estimation errors are in the "Code Review" tasks. This was caused by a miscommunication between the "back-end developpers" and the "front-end developpers".
+    - The major estimation errors occurred in the _Code Review_ tasks, which took longer than expected mainly due to miscommunication between the back-end and front-end developers.
 
 - What lessons did you learn (both positive and negative) in this sprint?
-    - We understood that the sprint meeting must not be underestimated.
+    - We realized that sprint meetings should not be underestimated, as they play a crucial role in keeping the team aligned and avoiding misunderstandings.
 
 - Which improvement goals set in the previous retrospective were you able to achieve? 
-    - This is the first retrospective
+    - First sprint, no previous set goals
   
 - Which ones you were not able to achieve? Why?
-    - This is the first retospective
+    - First sprint, no previous set goals
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
 
   > Propose one or two
-  - better team coordination
-  - better team communication (info must be more precise and complete)
+  - Improve team coordination to ensure a more balanced distribution of work and smoother task transitions.
+  - Enhance team communication by providing more precise and complete information during discussions.
 
 - One thing you are proud of as a Team!!
-  - We never yelled at each other even when we had some problems with the projects.
+  - We always maintained a positive and respectful attitude, even when facing challenges or issues with the project.

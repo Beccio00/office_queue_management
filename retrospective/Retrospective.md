@@ -65,7 +65,11 @@ sections:
   - Total hours estimated: 4h (stories 1 & 2), 2h (story 3, not done)
   - Total hours spent: 3h 56m (stories 1 & 2), 0h (story 3, not done)
   - Nr of automated unit test cases : 212
-  - Coverage
+  - Coverage (Jest report):
+    - Statements: 25.92 %
+    - Branches: 11.86 %
+    - Functions: 16.14 %
+    - Lines: 74.45 %
 - E2E testing:
   - Total hours estimated: 0h
   - Total hours spent: 0h
